@@ -1,0 +1,8 @@
+[workspace]
+members = ["crates/*"]
+resolver = "2"
+
+[workspace.dependencies]
+# local crates
+biz-http = { path = "./crates/biz-http", version="0.0.0" }
+biz-store = { path = "./crates/biz-store", version = "0.0.0" }

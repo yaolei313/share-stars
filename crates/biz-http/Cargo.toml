@@ -1,0 +1,16 @@
+[package]
+name = "biz-http"
+version = "0.0.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+axum = "0.7.4"
+features = "0.10.0"
+runtime-tokio = "0.0.0"
+serde = { version = "1.0.196", features = ["derive"] }
+serde_json = "1.0.112"
+sqlx = "0.7.3"
+tokio = {version = "1.35.1", features= ["full"]}
+tower = "0.4.13"
