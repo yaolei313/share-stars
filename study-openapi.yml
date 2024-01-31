@@ -1,0 +1,231 @@
+openapi: "3.0.3"
+info:
+  title: study project
+  description: "this is a study project
+    * item1
+    * item2"
+  termsOfService: http://example.com/terms/
+  contact:
+    name: yaolei
+    url: hhttps://yaolei313.github.io/
+    email: yaolei313@gmail.com
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: "1.0"
+servers:
+  - url: https://localhost:8080/v1
+    description: "devlopment env: used by developers"
+  - url: https://xxx-testing:8080/v1
+    description: "testing env: used by QA engineers"
+  - url: https://xxx-staging:8080/v1
+    description: "staging env: used by QA engineers, limit production data"
+  - url: https://xxx-production:8080/{basePath}
+    description: "production env: used by user, full production data"
+    variables:
+      basePath:
+        enum:
+          - "v1"
+          - "v2"
+        default: "v1"
+
+components:
+  schemas:
+    "LoginBySmsReqVo":
+      type: object
+      properties:
+        phone:
+          type: string
+          format: phone
+          description: 手机号
+        sms_code:
+          type: string
+          description: 短信验证码
+    "LoginResultVo":
+      type: object
+      properties:
+        user_id: 
+          type: integer
+          format: int64
+          description: 用户id
+        new_register:
+          type: boolean
+          description: 是否新注册
+        access_token:
+          type: string
+          description: access token
+        refresh_token:
+          type: string
+          description: refresh token 
+    "RspVo<LoginResultVo>":
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: 错误码
+        message:
+          type: string
+          description: 提示信息
+        data:
+          type: object
+          $ref: '#/components/schemas/LoginResultVo'    
+    "RspVo":
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: 错误码
+        message:
+          type: string
+          description: 提示信息
+    "UserPofileVo":
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: 用户id
+        name:
+          type: string
+          description: 昵称
+        phone:
+          type: string
+          description: 头像
+        desc: 
+          type: string
+          description: 简介
+    "RspVo<UserPofileVo>":
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: 错误码
+        message:
+          type: string
+          description: 提示信息
+        data:
+          type: object
+          $ref: '#/components/schemas/UserPofileVo' 
+  headers:
+    "trace_id":
+      description: trace id
+      schema:
+        type: string
+    "req_time":
+      description: request time
+      schema:
+        type: string
+  parameters:
+    'sig_param':
+      name: sig
+      in: header
+      description: request's signature
+      required: true
+      schema:
+        type: string
+    'device_id_param':
+      name: device_id
+      in: header
+      description: device id
+      required: true
+      schema: 
+        type: string 
+    'device_agent_param':
+      name: device_agent
+      in: header
+      description: device agent
+      required: true
+      schema: 
+        type: string
+    'token_param':
+      name: Authorization
+      in: header
+      description: token
+      schema:
+        type: string
+  requestBodies:
+    "register_body":
+      description: register request body
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/RspVo<LoginResultVo>"
+    "upload-photo":
+      description: upload photo 
+      content:
+        application/octet-stream:
+          schema: 
+            type: string
+            format: binary
+      
+  responses:
+    "200":
+      description: "ok"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/RspVo"
+    "401":
+      description: unauthorized
+    "403":
+      description: forbidden
+  securitySchemes:
+    "api_token":
+      type: apiKey
+      description: user token
+      name: Authorization
+      in: header
+    "api_basic":
+      type: http
+      description: bearer
+      scheme: bearer
+      bearerFormat: jwt
+paths:
+  /api/passport/login_by_sms:
+    post: 
+      summary: 'login by sms code'
+      description: 'auto register if user is not register'
+      parameters:
+        - $ref: '#/components/parameters/device_id_param'
+        - $ref: '#/components/parameters/device_agent_param'
+        - $ref: '#/components/parameters/sig_param'
+      requestBody:
+        content:
+          application/json:
+            schema: 
+              type: object
+              $ref: '#/components/schemas/LoginBySmsReqVo'
+      responses:
+        "200":
+          description: OK 
+          content:
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/RspVo<LoginResultVo>'
+  /api/users/{userId}:
+    get:
+      summary: 'view other user info'
+      description: 'return status normal user info'
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema: 
+            type: integer
+            format: int64
+        - $ref: '#/components/parameters/device_id_param'
+        - $ref: '#/components/parameters/device_agent_param'
+        - $ref: '#/components/parameters/sig_param'
+        - $ref: '#/components/parameters/token_param'
+      responses:
+        "200":
+          description: OK 
+          content:
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/RspVo<UserPofileVo>'
+      
+
