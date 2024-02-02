@@ -2,7 +2,14 @@
 members = ["crates/*"]
 resolver = "2"
 
+[workspace.package]
+version = "0.0.0"
+authors = ["yaolei313@gmail.com"]
+
 [workspace.dependencies]
 # local crates
+
+
 biz-http = { path = "./crates/biz-http", version="0.0.0" }
+biz-manager = { path = "./crates/biz-manager", version = "0.0.0" }
 biz-store = { path = "./crates/biz-store", version = "0.0.0" }
