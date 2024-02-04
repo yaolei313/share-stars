@@ -37,4 +37,8 @@ impl<T> RespVo<T> {
             data: None,
         }
     }
+
+    pub fn bad_request_info(message: &'static str) -> Self {
+        Self::bad_request(String::from(message))
+    }
 }
