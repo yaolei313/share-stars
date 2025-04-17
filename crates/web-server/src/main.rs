@@ -1,3 +1,5 @@
+mod config;
+
 use axum::{
     error_handling::HandleErrorLayer,
     extract::{Json, Path, Query},
@@ -15,13 +17,14 @@ use serde::{Deserialize, Serialize};
 use std::{borrow::Borrow, collections::HashMap, time::Duration};
 use tower::Service;
 use tower::ServiceBuilder;
-use tower_http::{timeout::TimeoutLayer, trace::TraceLayer};
+use tower_http::{auth, timeout::TimeoutLayer, trace::TraceLayer};
+
 
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt::init();
 
-    let app = biz_http::init_router();
+    let app = config::init_router();
     let address = "0.0.0.0:3000";
     let listener = tokio::net::TcpListener::bind(address)
         .await

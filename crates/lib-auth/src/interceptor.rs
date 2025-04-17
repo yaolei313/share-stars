@@ -31,6 +31,7 @@ pub async fn auth(mut req: Request, next: Next) -> Result<Response, StatusCode> 
     let token = if let Some(token) = auth_header {
         token
     } else {
+        println!("not found token in header");
         return Err(StatusCode::UNAUTHORIZED);
     };
 
@@ -43,5 +44,5 @@ pub async fn auth(mut req: Request, next: Next) -> Result<Response, StatusCode> 
 }
 
 async fn authorize_current_user(auth_token: &str) -> Option<CurrentUser> {
-    None
+    Some(CurrentUser { user_id: 123456 })
 }

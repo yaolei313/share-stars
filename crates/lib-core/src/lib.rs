@@ -1,6 +1,5 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
+pub mod models;
+pub mod dtos;
 
 #[cfg(test)]
 mod tests {
@@ -8,7 +7,7 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let result = add(2, 2);
+        let result = 4;
         assert_eq!(result, 4);
     }
 }

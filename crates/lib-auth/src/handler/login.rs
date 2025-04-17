@@ -1,4 +1,4 @@
-use crate::vo::*;
+use crate::{extract::ExtractUserAgent, vo::*};
 use axum::{
     extract::{Json, Path, Query},
     http::{
@@ -12,7 +12,11 @@ use headers::UserAgent;
 use serde::{Deserialize, Serialize};
 use std::{borrow::Borrow, collections::HashMap, time::Duration};
 
-pub async fn root(headers: HeaderMap) -> Result<Html<String>, &'static str> {
+pub async fn root(
+    headers: HeaderMap,
+    ExtractUserAgent(user_agent): ExtractUserAgent,
+) -> Result<Html<String>, &'static str> {
+    println!("user agent: {}", user_agent);
     let mut login_user_name: Option<String> = None;
     let cookie = headers
         .get(COOKIE)
