@@ -1,6 +1,6 @@
+pub mod error;
 pub mod login;
 
-pub use login::*;
 use serde::Serialize;
 
 pub enum RespCode {

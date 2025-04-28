@@ -1,10 +1,8 @@
-use axum::{
-    async_trait,
-    body::Bytes,
-    extract::{FromRequest, FromRequestParts, Request},
-    http::{header::USER_AGENT, request::Parts, StatusCode},
-    response::{IntoResponse, Response},
-};
+use axum::async_trait;
+use axum::extract::FromRequestParts;
+use axum::http::header::USER_AGENT;
+use axum::http::request::Parts;
+use axum::http::StatusCode;
 
 pub struct ExtractUserAgent(pub String);
 
@@ -27,22 +25,5 @@ where
         } else {
             Err((StatusCode::BAD_REQUEST, "`User-Agent` header is missing"))
         }
-    }
-}
-
-pub struct ValidatedBody(Bytes);
-
-#[async_trait]
-impl<S> FromRequest<S> for ValidatedBody
-where
-    S: Send + Sync,
-{
-    type Rejection = Response;
-
-    async fn from_request(req: Request, state: &S) -> Result<Self, Self::Rejection> {
-        let body = Bytes::from_request(req, state)
-            .await
-            .map_err(|err| err.into_response())?;
-        Ok(ValidatedBody(body))
     }
 }

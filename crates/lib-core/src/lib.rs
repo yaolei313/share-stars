@@ -1,5 +1,6 @@
 pub mod models;
 pub mod dtos;
+mod db;
 
 #[cfg(test)]
 mod tests {

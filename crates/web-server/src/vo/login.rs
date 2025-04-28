@@ -1,18 +1,18 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize)]
+#[derive(Debug,Deserialize,Validate)]
 pub struct LoginByPasswordReq {
     pub phone: String,
     pub password: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug,Deserialize)]
 pub struct LoginBySmsReq {
     pub phone: String,
     pub sms_code: String,
 }
 
-#[derive(Serialize)]
+#[derive(Debug,Serialize)]
 pub struct LoginResult {
     pub user_id: u64,
     pub new_register: bool,

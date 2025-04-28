@@ -1,4 +1,8 @@
 mod config;
+mod router;
+mod handler;
+mod extract;
+mod vo;
 
 use axum::{
     error_handling::HandleErrorLayer,
@@ -18,11 +22,14 @@ use std::{borrow::Borrow, collections::HashMap, time::Duration};
 use tower::Service;
 use tower::ServiceBuilder;
 use tower_http::{auth, timeout::TimeoutLayer, trace::TraceLayer};
-
+use tracing_subscriber::fmt;
+use tracing_subscriber::layer::SubscriberExt;
+use tracing_subscriber::util::SubscriberInitExt;
 
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt::init();
+    tracing_subscriber::registry().with(fmt::layer()).init();
 
     let app = config::init_router();
     let address = "0.0.0.0:3000";
@@ -31,4 +38,5 @@ async fn main() {
         .expect("bind address fail");
     tracing::debug!("listening on {}", address);
     axum::serve(listener, app).await.expect("serve fail");
+    log::info!("shutting down");
 }
