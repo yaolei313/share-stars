@@ -1,0 +1,27 @@
+use serde::{Deserialize, Serialize};
+use validator::Validate;
+
+#[derive(Debug, Deserialize, Serialize, Validate)]
+pub struct LoginByPasswordReq {
+    #[valdate(length(min = 11, max = 15, message = "phone is required"))]
+    pub phone: String,
+
+    #[validate(length(min = 6, max = 16, message = "password must at least 6 characters"))]
+    pub password: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, Validate)]
+pub struct LoginBySmsReq {
+    #[valdate(length(min = 11, max = 15, message = "phone is required"))]
+    pub phone: String,
+    pub sms_code: String,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct LoginResult {
+    pub user_id: u64,
+    pub new_register: bool,
+    pub access_token: Option<String>,
+    pub expire_seconds: u64,
+    pub refresh_token: Option<String>,
+}
