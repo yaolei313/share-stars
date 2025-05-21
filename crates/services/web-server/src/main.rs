@@ -1,6 +1,5 @@
-mod config;
-
 mod http;
+mod config;
 
 use axum::{
     BoxError, Form, Router,
@@ -13,26 +12,24 @@ use axum::{
     response::IntoResponse,
     routing::{get, post},
 };
-use axum_extra::{TypedHeader, response::Html};
 use headers::UserAgent;
 use log::LevelFilter;
 use serde::{Deserialize, Serialize};
-use std::fs::File;
-use std::{borrow::Borrow, collections::HashMap, time::Duration};
-use std::sync::Arc;
 use sqlx::postgres::PgPoolOptions;
+use std::fs::File;
+use std::sync::Arc;
+use std::{borrow::Borrow, collections::HashMap, time::Duration};
 use tower::Service;
 use tower::ServiceBuilder;
 use tower_http::{auth, timeout::TimeoutLayer, trace::TraceLayer};
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::{Layer, fmt};
-use lib_core::AppState;
-use crate::config::AppConfig;
+use crate::config::{AppConfig, AppState};
 
 #[tokio::main]
 async fn main() {
-    let config = AppConfig::init();
+    let config = Arc::new(AppConfig::init());
 
     env_logger::init();
 
@@ -49,14 +46,12 @@ async fn main() {
         )
         .init();
 
-    let state = Arc::new(config::to_app_state(&config).await.expect("invalid configuration"));
+    let state = Arc::new(
+        AppState::from(Arc::clone(config))
+            .await
+            .expect("invalid configuration"),
+    );
 
-    let app = http::router::init_router(state);
-    let address = concat!("0.0.0.0:", &config.port);
-    let listener = tokio::net::TcpListener::bind(address)
-        .await
-        .expect("bind address fail");
-    tracing::debug!("listening on {}", address);
-    axum::serve(listener, app).await.expect("serve fail");
+    http::serve(state).await;;
     log::info!("shutting down");
 }

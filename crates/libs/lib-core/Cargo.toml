@@ -27,3 +27,4 @@ tracing-subscriber.workspace = true
 uuid.workspace = true
 validator.workspace = true
 async-trait.workspace = true
+clap.workspace = true

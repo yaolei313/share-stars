@@ -1,11 +1,9 @@
-use axum::async_trait;
 use axum::body::Bytes;
 use axum::extract::{FromRequest, Request};
 use axum::response::{IntoResponse, Response};
 
 pub struct ValidatedBody(Bytes);
 
-#[async_trait]
 impl<S> FromRequest<S> for ValidatedBody
 where
     S: Send + Sync,

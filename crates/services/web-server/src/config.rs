@@ -1,6 +1,7 @@
 use anyhow::Context;
+use axum::extract::FromRef;
 use clap::{Parser, ValueEnum};
-use lib_core::AppState;
+use sqlx::PgPool;
 use sqlx::postgres::PgPoolOptions;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -64,22 +65,32 @@ impl AppConfig {
         // }
         AppConfig::parse()
     }
-
 }
 
-pub async fn to_app_state(config: &AppConfig) -> anyhow::Result<AppState> {
-    let db_pool = PgPoolOptions::new()
-        // The default connection limit for a Postgres server is 100 connections, minus 3 for superusers.
-        // Since we're using the default superuser we don't have to worry about this too much,
-        // although we should leave some connections available for manual access.
-        .max_connections(50)
-        .connect(&config.database_url)
-        .await
-        .context("could not connect to database_url")?;
-    let state = AppState{
-        db_pool,
-        jwt_secret: "".to_string(),
-        jwt_max_age: 0,
-    };
-    Ok(state)
+#[derive(Debug, FromRef, Clone)]
+pub struct AppState {
+    pub config: Arc<AppConfig>,
+    pub db_pool: PgPool,
+    pub jwt_secret: String,
+    pub jwt_max_age: u64,
+}
+
+impl AppState {
+    pub async fn from(config: Arc<AppConfig>) -> anyhow::Result<AppState> {
+        let db_pool = PgPoolOptions::new()
+            // The default connection limit for a Postgres server is 100 connections, minus 3 for superusers.
+            // Since we're using the default superuser we don't have to worry about this too much,
+            // although we should leave some connections available for manual access.
+            .max_connections(50)
+            .connect(&config.database_url)
+            .await
+            .context("could not connect to database_url")?;
+        let state = AppState {
+            config,
+            db_pool,
+            jwt_secret: "".to_string(),
+            jwt_max_age: 0,
+        };
+        Ok(state)
+    }
 }

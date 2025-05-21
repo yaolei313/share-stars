@@ -1,14 +1,14 @@
 pub mod models;
 
 use crate::db::models::User;
-use sqlx::{Executor, Pool, Postgres};
+use sqlx::{Executor, PgPool};
 
 pub struct DbClient {
-    pool: Pool<Postgres>,
+    pool: PgPool,
 }
 
 impl DbClient {
-    pub fn new(pool: Pool<Postgres>) -> Self {
+    pub fn new(pool: PgPool) -> Self {
         Self { pool }
     }
 }

@@ -1,15 +1,19 @@
+use anyhow::Context;
+use clap::{Parser, ValueEnum};
 use sqlx::PgPool;
+use sqlx::postgres::PgPoolOptions;
+use std::str::FromStr;
+use std::sync::Arc;
+use axum::extract::FromRef;
 
 mod db;
 pub mod dtos;
 
 
-#[derive(Debug)]
-pub struct AppState {
-    pub db_pool: PgPool,
-    pub jwt_secret: String,
-    pub jwt_max_age: u64,
-}
+
+
+
+
 
 #[cfg(test)]
 mod tests {

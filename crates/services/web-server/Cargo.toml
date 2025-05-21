@@ -6,7 +6,6 @@ authors.workspace = true
 
 
 [dependencies]
-lib-auth.workspace = true
 lib-core.workspace = true
 lib-utils.workspace = true
 anyhow.workspace = true

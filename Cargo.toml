@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/libs/*","crates/services/*", "crates/tools/*"]
+members = ["crates/libs/*", "crates/services/*", "crates/tools/*"]
 resolver = "2"
 
 [workspace.package]
@@ -9,12 +9,11 @@ authors = ["yaolei313@gmail.com"]
 
 [workspace.dependencies]
 # local crates
-lib-auth = { path = "crates/libs/lib-auth", version = "0.0.0" }
 lib-utils = { path = "crates/libs/lib-utils", version = "0.0.0" }
 lib-core = { path = "crates/libs/lib-core", version = "0.0.0" }
 # other crates
 anyhow = "1.0.79"
-axum = "0.8.1"
+axum = { version = "0.8.4", features = ["macros", "http2"] }
 axum-extra = { version = "0.10.0", features = ["typed-header"] }
 chrono = { version = "0.4.40", features = ["serde"] }
 dotenv = "0.15.0"

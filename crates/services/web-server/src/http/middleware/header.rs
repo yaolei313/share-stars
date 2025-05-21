@@ -1,4 +1,3 @@
-use axum::async_trait;
 use axum::extract::FromRequestParts;
 use axum::http::StatusCode;
 use axum::http::header::USER_AGENT;
@@ -6,7 +5,6 @@ use axum::http::request::Parts;
 
 pub struct ExtractUserAgent(pub String);
 
-#[async_trait]
 impl<S> FromRequestParts<S> for ExtractUserAgent
 where
     S: Send + Sync,

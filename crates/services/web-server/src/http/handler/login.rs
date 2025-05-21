@@ -5,6 +5,7 @@ use axum::{
     http::HeaderMap,
 };
 use std::{borrow::Borrow, collections::HashMap};
+use crate::http::middleware::CurrentUser;
 
 ///
 ///
@@ -34,13 +35,4 @@ pub async fn login_by_sms(Json(payload): Json<LoginBySmsReq>) -> Json<LoginResul
     todo!()
 }
 
-pub async fn profile_me() -> String {
-    format!("user")
-}
 
-pub async fn profile(
-    Path(user_id): Path<u64>,
-    Query(param): Query<HashMap<String, String>>,
-) -> String {
-    format!("user id:{}", user_id)
-}
