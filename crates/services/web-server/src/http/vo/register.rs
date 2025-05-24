@@ -1,8 +1,8 @@
+use serde::{Deserialize, Serialize};
+use validator::Validate;
 
-pub struct RegisterByEmailReq{
+#[derive(Debug, Deserialize, Serialize, Validate)]
+pub struct RegisterByEmailReq {}
 
-}
-
-pub struct RegisterResult {
-
-}
+#[derive(Debug, Deserialize, Serialize)]
+pub struct RegisterResult {}

@@ -15,7 +15,6 @@ impl DbClient {
 
 type SqlxResult<T> = Result<T, sqlx::Error>;
 
-#[async_trait::async_trait]
 pub trait UserExt {
     async fn add_user(&self, user: User) -> SqlxResult<User>;
 

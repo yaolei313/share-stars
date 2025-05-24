@@ -1,8 +1,9 @@
+use crate::config::AppState;
+use crate::http::vo::result::BizResultCode;
 use axum::extract::{FromRef, FromRequestParts};
 use axum::http::request::Parts;
-use axum::http::{header, StatusCode};
+use axum::http::{StatusCode, header};
 use chrono::{DateTime, Utc};
-use crate::config::AppState;
 
 pub enum LoginMethodEnum {
     PASSWORD,
@@ -14,12 +15,13 @@ pub struct CurrentUser {
     pub login_method: LoginMethodEnum,
 }
 
+impl FromRequestParts<AppState> for CurrentUser {
+    type Rejection = BizResultCode;
 
-impl<S> FromRequestParts<S> for CurrentUser
-{
-    type Rejection = StatusCode;
-
-    fn from_request_parts(parts: &mut Parts, state: &S) -> impl Future<Output=Result<Self, Self::Rejection>> + Send {
+    fn from_request_parts(
+        parts: &mut Parts,
+        state: &AppState,
+    ) -> impl Future<Output = Result<Self, Self::Rejection>> + Send {
         async {
             let auth_header = parts
                 .headers
@@ -27,23 +29,25 @@ impl<S> FromRequestParts<S> for CurrentUser
                 .and_then(|value| value.to_str().ok());
 
             if auth_header.is_none() {
-                return Err(StatusCode::UNAUTHORIZED)
+                return Err(BizResultCode::UNAUTHORIZED);
             }
-            let state = AppState::from_ref(state);
-            let result = validate_token(auth_header.unwrap(), &state).await;
+            let result = validate_token(auth_header.unwrap(), state).await;
             if result.is_none() {
-                Err(StatusCode::UNAUTHORIZED)
+                Err(BizResultCode::UNAUTHORIZED)
             } else {
                 Ok(result.unwrap())
             }
-
         }
     }
 }
 
 pub async fn validate_token(token: &str, state: &AppState) -> Option<CurrentUser> {
     if "123" == token {
-        Some(CurrentUser { user_id: 123456, login_at: Default::default(), login_method: LoginMethodEnum::PASSWORD })
+        Some(CurrentUser {
+            user_id: 123456,
+            login_at: Default::default(),
+            login_method: LoginMethodEnum::PASSWORD,
+        })
     } else {
         None
     }

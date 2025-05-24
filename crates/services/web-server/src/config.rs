@@ -6,7 +6,7 @@ use sqlx::postgres::PgPoolOptions;
 use std::str::FromStr;
 use std::sync::Arc;
 
-#[derive(ValueEnum, Debug)]
+#[derive(ValueEnum, Clone, Debug)]
 pub enum Env {
     DEV,
     TEST,

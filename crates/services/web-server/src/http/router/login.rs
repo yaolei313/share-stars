@@ -1,7 +1,7 @@
-use crate::http::handler::{login_by_password, login_by_sms};
-use axum::routing::post;
-use axum::Router;
 use crate::config::AppState;
+use crate::http::handler::{login_by_password, login_by_sms};
+use axum::Router;
+use axum::routing::post;
 
 pub fn routes() -> Router<AppState> {
     Router::new()

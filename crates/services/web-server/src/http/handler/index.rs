@@ -1,11 +1,12 @@
-use crate::extract::ExtractUserAgent;
 use axum::http::HeaderMap;
 use axum::http::header::COOKIE;
-use axum_extra::response::Html;
+use axum::response::Html;
+use axum_extra::TypedHeader;
+use headers::UserAgent;
 
 pub async fn root(
     headers: HeaderMap,
-    ExtractUserAgent(user_agent): ExtractUserAgent,
+    TypedHeader(user_agent): TypedHeader<UserAgent>,
 ) -> Result<Html<String>, &'static str> {
     println!("user agent: {}", user_agent);
     let mut login_user_name: Option<String> = None;
