@@ -1,7 +1,9 @@
 mod index;
 mod login;
+mod profile;
 mod register;
 
 pub use index::*;
-pub use register::*;
 pub use login::*;
+pub use profile::*;
+pub use register::*;

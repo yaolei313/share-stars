@@ -1,19 +1,19 @@
+use crate::config::AppState;
 use crate::http::vo::login::*;
 use crate::http::vo::*;
-use axum::{
-    extract::{Json, Path, Query},
-    http::HeaderMap,
-};
-use std::{borrow::Borrow, collections::HashMap};
+use axum::extract::State;
+use axum::{extract::Json, http::HeaderMap};
+use std::borrow::Borrow;
 
 ///
 ///
 pub async fn login_by_password(
+    State(state): State<AppState>,
     headers: HeaderMap,
     Json(payload): Json<LoginByPasswordReq>,
 ) -> Json<RespVo<LoginResult>> {
     for (key, value) in &headers {
-        println!("{} {}", key, value.to_str().ok().unwrap());
+        log::info!("header: {} {}", key, value.to_str().ok().unwrap());
     }
     if &payload.phone == "18866668888" && &payload.password == "abc123" {
         let result = LoginResult {
@@ -26,21 +26,13 @@ pub async fn login_by_password(
         let vo = RespVo::success(result);
         return Json(vo);
     }
-    let vo = RespVo::bad_request(String::from("forbidden"));
+    let vo = RespVo::bad_request_with_message(String::from("forbidden"));
     Json(vo)
 }
 
-pub async fn login_by_sms(Json(payload): Json<LoginBySmsReq>) -> Json<LoginResult> {
+pub async fn login_by_sms(
+    State(state): State<AppState>,
+    Json(payload): Json<LoginBySmsReq>,
+) -> Json<LoginResult> {
     todo!()
-}
-
-pub async fn profile_me() -> String {
-    format!("user")
-}
-
-pub async fn profile(
-    Path(user_id): Path<u64>,
-    Query(param): Query<HashMap<String, String>>,
-) -> String {
-    format!("user id:{}", user_id)
 }

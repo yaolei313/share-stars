@@ -3,7 +3,7 @@ use validator::Validate;
 
 #[derive(Debug, Deserialize, Serialize, Validate)]
 pub struct LoginByPasswordReq {
-    #[valdate(length(min = 11, max = 15, message = "phone is required"))]
+    #[validate(length(min = 11, max = 15, message = "phone is required"))]
     pub phone: String,
 
     #[validate(length(min = 6, max = 16, message = "password must at least 6 characters"))]
@@ -12,7 +12,7 @@ pub struct LoginByPasswordReq {
 
 #[derive(Debug, Deserialize, Serialize, Validate)]
 pub struct LoginBySmsReq {
-    #[valdate(length(min = 11, max = 15, message = "phone is required"))]
+    #[validate(length(min = 11, max = 15, message = "phone is required"))]
     pub phone: String,
     pub sms_code: String,
 }

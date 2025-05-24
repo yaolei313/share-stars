@@ -6,7 +6,6 @@ authors.workspace = true
 
 
 [dependencies]
-lib-auth.workspace = true
 lib-core.workspace = true
 lib-utils.workspace = true
 anyhow.workspace = true
@@ -29,5 +28,4 @@ tracing-subscriber.workspace = true
 uuid.workspace = true
 validator.workspace = true
 log.workspace = true
-env_logger.workspace = true
 clap.workspace = true
