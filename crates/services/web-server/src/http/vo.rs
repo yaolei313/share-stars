@@ -4,6 +4,7 @@ pub mod result;
 
 use crate::http::vo::result::BizResultCode;
 use serde::Serialize;
+use validator::ValidationErrors;
 
 #[derive(Serialize)]
 pub struct RespVo<T>
@@ -38,6 +39,10 @@ where
 
     pub fn success(data: T) -> Self {
         Self::new_with_data(BizResultCode::SUCCESS, Some(data))
+    }
+
+    pub fn invalid_request(error: ValidationErrors) -> Self {
+        Self::new_with_message(BizResultCode::INVALID_ARGUMENT, Some(error.to_string()))
     }
 
     pub fn bad_request_with_message(message: String) -> Self {

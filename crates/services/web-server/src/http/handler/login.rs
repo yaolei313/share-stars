@@ -4,6 +4,7 @@ use crate::http::vo::*;
 use axum::extract::State;
 use axum::{extract::Json, http::HeaderMap};
 use std::borrow::Borrow;
+use validator::{Validate, ValidationErrors};
 
 ///
 ///
@@ -12,6 +13,9 @@ pub async fn login_by_password(
     headers: HeaderMap,
     Json(payload): Json<LoginByPasswordReq>,
 ) -> Json<RespVo<LoginResult>> {
+    if let Err(err) = payload.validate() {
+        return Json(RespVo::invalid_request(err));
+    }
     for (key, value) in &headers {
         log::info!("header: {} {}", key, value.to_str().ok().unwrap());
     }

@@ -1,22 +1,30 @@
 use crate::config::AppState;
+use crate::http::handler::{
+    login_by_password, login_by_sms, profile, profile_me, register_by_email,
+};
 use axum::error_handling::HandleErrorLayer;
 use axum::http::{Method, StatusCode, Uri};
 use axum::response::IntoResponse;
+use axum::routing::{get, post};
 use axum::{BoxError, Router};
 use std::borrow::Cow;
 use std::time::Duration;
 use tower::ServiceBuilder;
 use tower_http::trace::TraceLayer;
 
-mod login;
-mod profile;
-mod register;
-
 pub fn init_router(state: AppState) -> Router {
+    let login_router = Router::new()
+        .route("/login_by_password", post(login_by_password))
+        .route("/login_by_sms", post(login_by_sms));
+    let register_router = Router::new().route("/register_by_email", post(register_by_email));
+    let profiles_router = Router::new()
+        .route("/profile/me", get(profile_me))
+        .route("/profile/{user_id}", get(profile));
     let router = Router::new()
-        .merge(login::routes())
-        .merge(profile::routes())
-        .merge(register::routes());
+        .merge(login_router)
+        .merge(register_router)
+        .merge(profiles_router);
+
     Router::new()
         .nest("/api", router)
         .layer(

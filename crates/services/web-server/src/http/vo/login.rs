@@ -3,10 +3,18 @@ use validator::Validate;
 
 #[derive(Debug, Deserialize, Serialize, Validate)]
 pub struct LoginByPasswordReq {
-    #[validate(length(min = 11, max = 15, message = "phone is required"))]
+    #[validate(length(
+        min = 11,
+        max = 15,
+        message = "phone must at least be 11 characters and at most 15"
+    ))]
     pub phone: String,
 
-    #[validate(length(min = 6, max = 16, message = "password must at least 6 characters"))]
+    #[validate(length(
+        min = 6,
+        max = 16,
+        message = "password must at least 6 characters and at most 16"
+    ))]
     pub password: String,
 }
 
