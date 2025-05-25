@@ -3,7 +3,7 @@ create type user_role as enum('admin','user');
 
 create extension if not exists "uuid-ossp";
 
-create table "users" (
+create table "user" (
     id UUID not null primary key default (uuid_generate_v4()),
     name varchar(100) not null,
     email varchar(255) not null,
@@ -16,4 +16,4 @@ create table "users" (
     updated_at timestamp with time zone default now()
 );
 
-create index users_idx_email on users(email);
+create index user_idx_email on "user"(email);
