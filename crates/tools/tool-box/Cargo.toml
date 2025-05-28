@@ -5,3 +5,7 @@ edition.workspace = true
 authors.workspace = true
 
 [dependencies]
+anyhow.workspace = true
+sqlx.workspace = true
+tokio.workspace = true
+dotenv.workspace = true

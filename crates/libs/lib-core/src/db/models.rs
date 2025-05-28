@@ -39,3 +39,7 @@ pub struct User {
     #[serde(rename = "updatedAt")]
     pub updated_at: DateTime<Utc>,
 }
+
+pub struct Passport {
+    pub id: i64,
+}
