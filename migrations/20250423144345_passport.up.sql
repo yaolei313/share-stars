@@ -13,8 +13,8 @@ create table "passport"
     closed_at       timestamp,
     disabled        boolean      not null default false,
     disabled_at     timestamp,
-    created_at      timestamp             default now(),
-    updated_at      timestamp             default now()
+    created_at      timestamp    not null default now(),
+    updated_at      timestamp    not null default now()
 );
 
 create unique index passport_unq_user_id on passport (user_id);

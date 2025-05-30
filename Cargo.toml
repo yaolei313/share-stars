@@ -40,3 +40,4 @@ uuid = { version = "1.16.0", features = ["serde"] }
 validator = { version = "0.20", features = ["derive"] }
 log = "0.4"
 clap = { version = "4.5.26", features = ["derive", "env"] }
+phf = { version = "0.11.3", features = ["macros"] }

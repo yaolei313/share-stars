@@ -1,7 +1,11 @@
+mod str_ext;
+
 use anyhow::Result;
 use std::ffi::OsStr;
 use std::io::{Error, ErrorKind};
 use std::path::{Path, PathBuf};
+
+pub use str_ext::*;
 
 pub trait PathResolveExt {
     fn resolve(&self) -> Result<PathBuf>;

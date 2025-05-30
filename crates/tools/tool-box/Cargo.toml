@@ -9,3 +9,8 @@ anyhow.workspace = true
 sqlx.workspace = true
 tokio.workspace = true
 dotenv.workspace = true
+lib-utils.workspace = true
+phf.workspace = true
+uuid = { version = "1.16.0", features = ["v4"] }
+chrono = "0.4.41"
+serde_json = "1.0.140"
