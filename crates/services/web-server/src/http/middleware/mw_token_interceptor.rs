@@ -1,8 +1,8 @@
 use crate::config::AppState;
-use crate::http::vo::result::BizResultCode;
-use axum::extract::{FromRef, FromRequestParts};
+use crate::http::vo::error::AppError;
+use axum::extract::FromRequestParts;
+use axum::http::header;
 use axum::http::request::Parts;
-use axum::http::{StatusCode, header};
 use chrono::{DateTime, Utc};
 
 pub enum LoginMethodEnum {
@@ -16,7 +16,7 @@ pub struct CurrentUser {
 }
 
 impl FromRequestParts<AppState> for CurrentUser {
-    type Rejection = BizResultCode;
+    type Rejection = AppError;
 
     fn from_request_parts(
         parts: &mut Parts,
@@ -29,11 +29,11 @@ impl FromRequestParts<AppState> for CurrentUser {
                 .and_then(|value| value.to_str().ok());
 
             if auth_header.is_none() {
-                return Err(BizResultCode::UNAUTHORIZED);
+                return Err(AppError::Unauthorized);
             }
             let result = validate_token(auth_header.unwrap(), state).await;
             if result.is_none() {
-                Err(BizResultCode::UNAUTHORIZED)
+                Err(AppError::Unauthorized)
             } else {
                 Ok(result.unwrap())
             }

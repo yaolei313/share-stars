@@ -1,6 +1,8 @@
 mod passport;
+mod phone_mapping;
 
 pub use passport::*;
+pub use phone_mapping::*;
 
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};

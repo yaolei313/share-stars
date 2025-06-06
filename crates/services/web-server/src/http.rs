@@ -3,7 +3,7 @@ use crate::http;
 
 mod handler;
 mod router;
-mod vo;
+pub(crate) mod vo;
 
 mod middleware;
 

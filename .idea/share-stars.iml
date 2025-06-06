@@ -8,6 +8,8 @@
       <sourceFolder url="file://$MODULE_DIR$/crates/libs/lib-utils/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/crates/services/web-server/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/crates/tools/tool-box/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/libs/lib-macro-derive/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/libs/lib-macro/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />

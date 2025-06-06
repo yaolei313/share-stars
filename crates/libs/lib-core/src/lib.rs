@@ -1,2 +1,1 @@
-mod biz;
-mod db;
+pub mod db;

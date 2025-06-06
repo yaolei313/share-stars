@@ -1,0 +1,13 @@
+[package]
+name = "lib-macro-derive"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = "2.0.96"
+quote = "1.0.38"
+proc-macro2 = "1.0.95"

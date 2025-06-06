@@ -1,4 +1,6 @@
+use crate::biz::login;
 use crate::config::AppState;
+use crate::http::vo::error::AppError;
 use crate::http::vo::login::*;
 use crate::http::vo::*;
 use axum::extract::State;
@@ -12,26 +14,16 @@ pub async fn login_by_password(
     State(state): State<AppState>,
     headers: HeaderMap,
     Json(payload): Json<LoginByPasswordReq>,
-) -> Json<RespVo<LoginResult>> {
+) -> AppResult<Json<RespVo<LoginResult>>> {
+    // 校验参数
     if let Err(err) = payload.validate() {
-        return Json(RespVo::invalid_request(err));
+        return Err(AppError::InvalidArgument(err.to_string()));
     }
     for (key, value) in &headers {
         log::info!("header: {} {}", key, value.to_str().ok().unwrap());
     }
-    if &payload.phone == "18866668888" && &payload.password == "abc123" {
-        let result = LoginResult {
-            user_id: 123,
-            new_register: false,
-            access_token: Some(String::from("123")),
-            expire_seconds: 0,
-            refresh_token: Some(String::from("refresh token")),
-        };
-        let vo = RespVo::success(result);
-        return Json(vo);
-    }
-    let vo = RespVo::bad_request_with_message(String::from("forbidden"));
-    Json(vo)
+    login::login_by_password(state, &payload.phone, &payload.password)
+        .map(|r| Json(RespVo::success(r)))
 }
 
 pub async fn login_by_sms(

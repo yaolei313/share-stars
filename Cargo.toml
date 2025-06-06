@@ -11,6 +11,8 @@ authors = ["yaolei313@gmail.com"]
 # local crates
 lib-utils = { path = "crates/libs/lib-utils", version = "0.0.0" }
 lib-core = { path = "crates/libs/lib-core", version = "0.0.0" }
+lib-macro = { path = "crates/libs/lib-macro", version = "0.0.0" }
+lib-macro-derive = { path = "crates/libs/lib-macro-derive", version = "0.0.0" }
 # other crates
 anyhow = "1.0.79"
 axum = { version = "0.8.4", features = ["macros", "http2"] }
@@ -20,7 +22,6 @@ dotenv = "0.15.0"
 features = "0.10.0"
 headers = "0.4.0"
 jsonwebtoken = "9.3.1"
-runtime-tokio = "0.0.0"
 serde = { version = "1.0.196", features = ["derive"] }
 serde_json = "1.0.112"
 sqlx = { version = "0.8.3", features = ["runtime-tokio", "postgres", "chrono", "uuid"] }
@@ -41,3 +42,4 @@ validator = { version = "0.20", features = ["derive"] }
 log = "0.4"
 clap = { version = "4.5.26", features = ["derive", "env"] }
 phf = { version = "0.11.3", features = ["macros"] }
+thiserror = { version = "2.0.11" }

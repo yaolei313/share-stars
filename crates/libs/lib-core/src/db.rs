@@ -1,5 +1,5 @@
 pub mod models;
-mod repositories;
+pub mod repositories;
 
 use crate::db::models::User;
 use sqlx::{Executor, PgPool};

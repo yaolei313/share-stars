@@ -1,10 +1,14 @@
+pub mod error;
 pub mod login;
 pub mod register;
-pub mod result;
 
-use crate::http::vo::result::BizResultCode;
+use crate::http::vo::error::AppError;
+use axum::response::IntoResponse;
 use serde::Serialize;
+use std::fmt::Display;
 use validator::ValidationErrors;
+
+pub type AppResult<T> = Result<T, AppError>;
 
 #[derive(Serialize)]
 pub struct RespVo<T>
@@ -12,44 +16,44 @@ where
     T: Serialize,
 {
     pub code: i32,
-    pub message: Option<String>,
+    pub message: String,
     pub data: Option<T>,
+}
+
+impl<T> From<AppError> for RespVo<T>
+where
+    T: Serialize,
+{
+    fn from(value: AppError) -> Self {
+        let message = match value {
+            AppError::Success => "success".to_owned(),
+            _ => format!("{}", value),
+        };
+        RespVo {
+            code: value.code(),
+            message,
+            data: None,
+        }
+    }
 }
 
 impl<T> RespVo<T>
 where
     T: Serialize,
 {
-    pub fn new_with_data(result: BizResultCode, data: Option<T>) -> Self {
-        Self {
-            code: result.code(),
-            message: Some(result.message().to_string()),
-            data,
-        }
-    }
-
-    pub fn new_with_message(result: BizResultCode, message: Option<String>) -> Self {
-        let message = message.or(Some(result.message().to_string()));
-        Self {
-            code: result.code(),
-            message,
-            data: None,
-        }
-    }
-
     pub fn success(data: T) -> Self {
-        Self::new_with_data(BizResultCode::SUCCESS, Some(data))
+        let rsp: RespVo<T> = AppError::Success.into();
+        Self {
+            data: Some(data),
+            ..rsp
+        }
     }
 
-    pub fn invalid_request(error: ValidationErrors) -> Self {
-        Self::new_with_message(BizResultCode::INVALID_ARGUMENT, Some(error.to_string()))
+    pub fn fail(msg: String) -> Self {
+        AppError::Fail(msg).into()
     }
 
-    pub fn bad_request_with_message(message: String) -> Self {
-        Self::new_with_message(BizResultCode::BAD_REQUEST, Some(message))
-    }
-
-    pub fn bad_request() -> Self {
-        Self::new_with_message(BizResultCode::BAD_REQUEST, None)
+    pub fn invalid_argument(error: ValidationErrors) -> Self {
+        AppError::InvalidArgument(error.to_string()).into()
     }
 }
