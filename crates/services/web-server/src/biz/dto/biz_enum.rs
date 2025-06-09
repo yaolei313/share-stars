@@ -1,4 +1,4 @@
-pub enum AuthTypeEnum {
+pub enum AuthnTypeEnum {
     SmsCode = 1,
     Password = 2,
     OidcFacebook = 4,

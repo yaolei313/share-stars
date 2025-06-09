@@ -1,6 +1,6 @@
 use crate::config::AppState;
 use crate::http::handler::{
-    login_by_password, login_by_sms, profile, profile_me, register_by_email,
+    login_by_password, login_by_sms, profile, profile_me, register_by_email, test,
 };
 use axum::error_handling::HandleErrorLayer;
 use axum::http::{Method, StatusCode, Uri};
@@ -20,10 +20,12 @@ pub fn init_router(state: AppState) -> Router {
     let profiles_router = Router::new()
         .route("/profile/me", get(profile_me))
         .route("/profile/{user_id}", get(profile));
+    let test_router = Router::new().route("/test", get(test));
     let router = Router::new()
         .merge(login_router)
         .merge(register_router)
-        .merge(profiles_router);
+        .merge(profiles_router)
+        .merge(test_router);
 
     Router::new()
         .nest("/api", router)

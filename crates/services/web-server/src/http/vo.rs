@@ -10,7 +10,7 @@ use validator::ValidationErrors;
 
 pub type AppResult<T> = Result<T, AppError>;
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 pub struct RespVo<T>
 where
     T: Serialize,
@@ -56,4 +56,21 @@ where
     pub fn invalid_argument(error: ValidationErrors) -> Self {
         AppError::InvalidArgument(error.to_string()).into()
     }
+}
+
+#[derive(Debug)]
+pub enum PlatformEnum {
+    Web = 1,
+    AppIos = 2,
+    AppAndroid = 3,
+    Pc = 4,
+}
+
+#[derive(Debug, Serialize)]
+pub struct DeviceInfo {
+    pub platform: PlatformEnum,
+    pub ip: Option<String>,
+    pub user_agent: Option<String>,
+    pub device_id: Option<String>,
+    pub request_id: Option<String>,
 }

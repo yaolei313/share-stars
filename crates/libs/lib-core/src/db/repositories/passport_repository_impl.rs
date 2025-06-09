@@ -1,8 +1,9 @@
 use crate::db::models::Passport;
 use crate::db::repositories::PassportRepository;
-use anyhow::Result;
 use sqlx::PgPool;
+use std::fmt::{Debug, Formatter};
 
+#[derive(Debug)]
 pub struct PgPassportRepository {
     pool: PgPool,
 }
@@ -14,7 +15,7 @@ impl PgPassportRepository {
 }
 
 impl PassportRepository for PgPassportRepository {
-    async fn by_user_id(&self, user_id: i64) -> Result<Option<Passport>> {
+    async fn by_user_id(&self, user_id: i64) -> Result<Option<Passport>, sqlx::Error> {
         let passport = sqlx::query_as!(
             Passport,
             "SELECT * FROM passport WHERE user_id = $1",

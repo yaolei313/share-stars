@@ -1,5 +1,6 @@
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
+use std::collections::HashSet;
 use syn::spanned::Spanned;
 use syn::{Attribute, Data, DataEnum, DeriveInput, ExprLit, Lit, LitInt};
 use syn::{Expr, Result};
@@ -21,6 +22,7 @@ pub(crate) fn try_expand_bind_code_derive(input: DeriveInput) -> Result<TokenStr
 fn impl_enum(enum_name: &Ident, data_enum: DataEnum) -> Result<TokenStream> {
     // Collect all the match arms for the `code()` method.
     let mut match_arms = Vec::new();
+    let mut seen_codes = HashSet::new();
 
     for variant in &data_enum.variants {
         let variant_name = &variant.ident; // The name of the variant (e.g., Success, Fail)
@@ -38,6 +40,18 @@ fn impl_enum(enum_name: &Ident, data_enum: DataEnum) -> Result<TokenStream> {
                 ));
             }
         };
+
+        let val = code_value.to_string();
+        if !seen_codes.insert(val) {
+            // 如果 insert 返回 false，说明 code_value 已经存在于 HashSet 中
+            return Err(syn::Error::new(
+                code_value.span(), // 错误指向重复的 code 值本身
+                format!(
+                    "Duplicate code value `{}` found. Each `#[code(VALUE)]` must be unique.",
+                    code_value
+                ),
+            ));
+        }
 
         // Determine if the variant has fields (e.g., `Fail(String)` or `InvalidArgument(String)`).
         // If it does, we need to match with `_` to ignore the field data.

@@ -1,8 +1,9 @@
 use anyhow::Context;
 use axum::extract::FromRef;
 use clap::{Parser, ValueEnum};
-use sqlx::PgPool;
+use lib_core::db::repositories::{PgPassportRepository, PgPhoneMappingRepository};
 use sqlx::postgres::PgPoolOptions;
+use sqlx::PgPool;
 use std::str::FromStr;
 use std::sync::Arc;
 
@@ -67,12 +68,27 @@ impl AppConfig {
     }
 }
 
-#[derive(Debug, FromRef, Clone)]
+#[derive(FromRef, Clone)]
 pub struct AppState {
     pub config: Arc<AppConfig>,
-    pub db_pool: PgPool,
     pub jwt_secret: String,
     pub jwt_max_age: u64,
+    pub repository: Repository,
+}
+
+#[derive(Clone)]
+pub struct Repository {
+    pub passport_repo: Arc<PgPassportRepository>,
+    pub phone_mapping_repo: Arc<PgPhoneMappingRepository>,
+}
+
+impl Repository {
+    pub fn new(db_pool: PgPool) -> Self {
+        Repository {
+            passport_repo: Arc::new(PgPassportRepository::new(db_pool.clone())),
+            phone_mapping_repo: Arc::new(PgPhoneMappingRepository::new(db_pool.clone())),
+        }
+    }
 }
 
 impl AppState {
@@ -85,11 +101,12 @@ impl AppState {
             .connect(&config.database_url)
             .await
             .context("could not connect to database_url")?;
+        let repository = Repository::new(db_pool);
         let state = AppState {
             config,
-            db_pool,
             jwt_secret: "".to_string(),
             jwt_max_age: 0,
+            repository,
         };
         Ok(state)
     }

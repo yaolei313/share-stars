@@ -1,10 +1,10 @@
-use axum::http::HeaderMap;
 use axum::http::header::COOKIE;
+use axum::http::HeaderMap;
 use axum::response::Html;
 use axum_extra::TypedHeader;
 use headers::UserAgent;
 
-pub async fn root(
+pub async fn test(
     headers: HeaderMap,
     TypedHeader(user_agent): TypedHeader<UserAgent>,
 ) -> Result<Html<String>, &'static str> {

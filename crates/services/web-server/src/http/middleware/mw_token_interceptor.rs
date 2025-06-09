@@ -31,7 +31,7 @@ impl FromRequestParts<AppState> for CurrentUser {
             if auth_header.is_none() {
                 return Err(AppError::Unauthorized);
             }
-            let result = validate_token(auth_header.unwrap(), state).await;
+            let result = validate_token(state, auth_header.unwrap()).await;
             if result.is_none() {
                 Err(AppError::Unauthorized)
             } else {
@@ -41,7 +41,7 @@ impl FromRequestParts<AppState> for CurrentUser {
     }
 }
 
-pub async fn validate_token(token: &str, state: &AppState) -> Option<CurrentUser> {
+pub async fn validate_token(state: &AppState, token: &str) -> Option<CurrentUser> {
     if "123" == token {
         Some(CurrentUser {
             user_id: 123456,

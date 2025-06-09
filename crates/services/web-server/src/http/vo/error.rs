@@ -1,7 +1,8 @@
 use crate::http::vo::RespVo;
-use axum::Json;
 use axum::response::{IntoResponse, Response};
+use axum::Json;
 use lib_macro_derive::BindCode;
+use std::io;
 use thiserror::Error;
 
 #[derive(Error, Debug, BindCode)]
@@ -18,17 +19,57 @@ pub enum AppError {
     #[error("invalid argument: {0}")]
     InvalidArgument(String),
 
+    #[code(100)]
+    #[error("invalid phone number {0}")]
+    InvalidPhoneNumber(String),
+
+    #[code(101)]
+    #[error("unregister phone number")]
+    UnregisterPhone,
+
+    #[code(102)]
+    #[error("user may not exists or password error")]
+    InvalidUserOrPassword,
+
+    #[code(103)]
+    #[error("account has been temporarily disabled")]
+    AccountTemporarilyDisabled,
+
+    #[code(104)]
+    #[error("account has been closed")]
+    AccountClosed,
+
+    #[code(105)]
+    #[error("too many incorrect password attempts")]
+    TooManyIncorrectPasswordAttempts,
+
+    #[code(106)]
+    #[error("login attempt from an unrecognized device")]
+    Upgraded2FASms,
+
+    #[code(107)]
+    #[error("login attempt from an unrecognized device")]
+    Upgraded2FAHardToken,
+
+    #[code(108)]
+    #[error("login attempt from an unrecognized device")]
+    Upgraded2FAPushCode,
+
     #[code(401)]
     #[error("authentication required")]
     Unauthorized,
 
     #[code(403)]
-    #[error("user may not perform that action")]
+    #[error("operation not allowed")]
     Forbidden,
 
-    #[code(500)]
-    #[error("user may not exists or password error")]
-    InvalidUserOrPassword,
+    #[code(1000)]
+    #[error("database operation failed: {0}")]
+    Database(#[from] sqlx::Error),
+
+    #[code(1001)]
+    #[error("I/O operation failed: {0}")]
+    Io(#[from] io::Error),
 }
 
 impl IntoResponse for AppError {

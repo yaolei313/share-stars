@@ -5,6 +5,12 @@ mod phone_mapping_repository_impl;
 
 pub use passport_repository::*;
 
+pub use phone_mapping_repository::*;
+
+pub use passport_repository_impl::*;
+
+pub use phone_mapping_repository_impl::*;
+
 pub fn sharding_for_phone() -> u64 {
     todo!()
 }
