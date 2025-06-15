@@ -1,0 +1,25 @@
+[server]
+port = 8080
+host = "0.0.0.0"
+
+[database]
+min_connections = 5
+max_connections = 20
+idle_timeout_seconds = 30
+
+[jwt]
+issuer = "yao"
+expire_seconds = 3600
+
+[[jwt.keys]]
+kid = "v1"
+private_key_path = "JWT_PRIVATE_KEY_V1_PEM"
+public_key_path = ""
+
+
+[[jwt.keys]]
+kid = "v2"
+private_key_path = "JWT_PRIVATE_KEY_V1_PEM"
+public_key_path = ""
+
+

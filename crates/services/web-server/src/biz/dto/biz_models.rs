@@ -7,3 +7,9 @@ pub enum AuthnTypeEnum {
 
     QrCode = 10,
 }
+
+pub struct TokenInfo {
+    pub access_token: String,
+    pub expires_in: i64,
+    pub refresh_token: Option<String>,
+}

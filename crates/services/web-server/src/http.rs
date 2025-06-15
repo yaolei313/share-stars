@@ -11,7 +11,7 @@ mod middleware;
 
 pub async fn serve(state: AppState) {
     let app = router::init_router(state.clone());
-    let address = format!("0.0.0.0:{}", state.config.port);
+    let address = format!("0.0.0.0:{}", 8080);
     let listener = tokio::net::TcpListener::bind(&address)
         .await
         .expect("bind address fail");

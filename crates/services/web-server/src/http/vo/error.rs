@@ -1,6 +1,6 @@
 use crate::http::vo::RespVo;
-use axum::response::{IntoResponse, Response};
 use axum::Json;
+use axum::response::{IntoResponse, Response};
 use lib_macro_derive::BindCode;
 use std::io;
 use thiserror::Error;
@@ -70,6 +70,10 @@ pub enum AppError {
     #[code(1001)]
     #[error("I/O operation failed: {0}")]
     Io(#[from] io::Error),
+
+    #[code(1002)]
+    #[error("jsonwebtoken operation failed: {0}")]
+    Token(#[from] jsonwebtoken::errors::Error),
 }
 
 impl IntoResponse for AppError {

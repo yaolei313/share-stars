@@ -58,7 +58,7 @@ where
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub enum PlatformEnum {
     Web = 1,
     AppIos = 2,

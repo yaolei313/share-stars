@@ -3,34 +3,38 @@ mod config;
 mod http;
 
 use crate::config::{AppConfig, AppState};
+use anyhow::Result;
 use axum::{
-    error_handling::HandleErrorLayer, extract::{Json, Path, Query},
+    Form, Router,
+    error_handling::HandleErrorLayer,
+    extract::{Json, Path, Query},
     http::{
-        header::{self, COOKIE}, HeaderMap, HeaderName, HeaderValue,
-        StatusCode,
+        HeaderMap, HeaderName, HeaderValue, StatusCode,
+        header::{self, COOKIE},
     },
     response::IntoResponse,
     routing::{get, post},
-    Form,
-    Router,
 };
 use headers::UserAgent;
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPoolOptions;
 use std::fs::File;
 use std::sync::Arc;
-use std::{borrow::Borrow, collections::HashMap, time::Duration};
+use std::{borrow::Borrow, collections::HashMap, env, time::Duration};
 use tower::Service;
 use tower::ServiceBuilder;
 use tower_http::{auth, timeout::TimeoutLayer, trace::TraceLayer};
 use tracing_subscriber::filter::LevelFilter;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
-use tracing_subscriber::{fmt, Layer};
+use tracing_subscriber::{Layer, fmt};
 
 #[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    let config = Arc::new(AppConfig::init());
+async fn main() -> Result<()> {
+    let path = env::current_dir()?;
+    println!("The current directory is {}", path.display());
+
+    let config = Arc::new(AppConfig::init()?);
 
     let json_log = File::create("stars.log")?;
     tracing_subscriber::registry()

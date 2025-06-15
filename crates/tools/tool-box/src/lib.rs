@@ -1,27 +1,17 @@
 use crate::pg_meta::ColumnInfo;
 use sqlx::FromRow;
 use std::collections::HashMap;
-use std::fs::OpenOptions;
+use std::fs::File;
 use std::io::Write;
-use std::path::Path;
 use std::sync::OnceLock;
 
 pub mod pg_meta;
 
 pub fn convert_schema_to_struct(
-    target_dir: &str,
+    file: &mut File,
     name: &str,
     column_infos: Vec<ColumnInfo>,
 ) -> anyhow::Result<()> {
-    // let file = File::create_new();
-    let dir_path = Path::new(target_dir);
-    let file_path = dir_path.join("model.rs");
-    let mut file = OpenOptions::new()
-        .write(true)
-        .create(true)
-        .truncate(true)
-        .open(file_path)?;
-
     let mut header = String::new();
     let mut body = String::new();
     header.push_str("use sqlx::FromRow;\n");

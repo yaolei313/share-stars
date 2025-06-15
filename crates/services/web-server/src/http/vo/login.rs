@@ -27,9 +27,9 @@ pub struct LoginBySmsReq {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct LoginResult {
-    pub user_id: u64,
+    pub user_id: i64,
     pub new_register: bool,
-    pub access_token: Option<String>,
-    pub expire_seconds: u64,
+    pub access_token: String,
+    pub expires_in: i64,
     pub refresh_token: Option<String>,
 }

@@ -1,4 +1,4 @@
-use crate::biz::login;
+use crate::biz::authn;
 use crate::config::AppState;
 use crate::http::middleware::ExtractDeviceInfo;
 use crate::http::vo::error::AppError;
@@ -26,7 +26,7 @@ pub async fn login_by_password(
     };
     let std_phone = number.format().mode(Mode::E164).to_string();
     log::info!("phone number is {}", number);
-    login::login_by_password(state, &std_phone, &payload.password, &device_info)
+    authn::login_by_password(state, &std_phone, &payload.password, &device_info)
         .await
         .map(|r| Json(RespVo::success(r)))
 }

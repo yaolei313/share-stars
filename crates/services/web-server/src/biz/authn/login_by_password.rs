@@ -1,3 +1,5 @@
+use crate::biz::authn::base_login;
+use crate::biz::dto::AuthnTypeEnum;
 use crate::biz::security::{
     add_password_error_count, exceed_password_error_limit, is_trusted_device,
 };
@@ -51,6 +53,9 @@ pub async fn login_by_password(
     if !is_trusted_device(user_id, device_info) {
         return Err(AppError::Upgraded2FASms);
     }
+
+    // 公共登陆逻辑
+    base_login::common_login(AuthnTypeEnum::Password, user_id, device_info).await
 }
 
 fn check_pwd(input_password: &str, salt: &str, password_sha256: &str) -> bool {

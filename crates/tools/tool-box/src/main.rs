@@ -3,7 +3,8 @@ use dotenv::dotenv;
 
 use phf::phf_map;
 use std::env;
-use std::path::PathBuf;
+use std::fs::OpenOptions;
+use std::path::{Path, PathBuf};
 use tool_box::convert_schema_to_struct;
 use tool_box::pg_meta::PgMeta;
 
@@ -20,11 +21,22 @@ async fn main() -> Result<()> {
 
     let meta = PgMeta::new(&database_url).await?;
 
+    let dir_path = Path::new(&target_dir);
+    let file_path = dir_path.join("model.rs");
+    let mut file = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .open(file_path)?;
+
     let schema = "public";
     let table = "passport";
     let column_infos = meta.get_all_column_infos(schema, table).await?;
+    convert_schema_to_struct(&mut file, table, column_infos).expect("convert fail");
 
-    convert_schema_to_struct(&target_dir, table, column_infos).expect("convert fail");
+    let table = "trusted_device";
+    let column_infos = meta.get_all_column_infos(schema, table).await?;
+    convert_schema_to_struct(&mut file, table, column_infos).expect("convert fail");
 
     Ok(())
 }
