@@ -1,5 +1,4 @@
 use anyhow::Result;
-use dotenv::dotenv;
 
 use phf::phf_map;
 use std::env;
@@ -13,7 +12,7 @@ async fn main() -> Result<()> {
     let current_dir: PathBuf = env::current_dir()?;
     println!("Current working directory: {:?}", current_dir);
 
-    dotenv().ok(); // 加载 .env 文件
+    dotenv::from_filename(".tool.env").ok(); // 加载 .env 文件
     let database_url =
         env::var("DATABASE_URL").expect("DATABASE_URL must be set in .env file or environment");
     let target_dir =

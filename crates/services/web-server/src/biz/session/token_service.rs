@@ -20,8 +20,11 @@ pub async fn create_token(
     //     &claims,
     //     &EncodingKey::from_rsa_pem(include_bytes!("privkey.pem"))?,
     // )?;
-
-    todo!()
+    Ok(TokenInfo {
+        access_token: "123".to_string(),
+        expires_in: 3600,
+        refresh_token: None,
+    })
 }
 
 #[derive(Debug, Serialize, Deserialize)]

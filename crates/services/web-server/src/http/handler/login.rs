@@ -1,6 +1,6 @@
 use crate::biz::authn;
 use crate::config::AppState;
-use crate::http::middleware::ExtractDeviceInfo;
+use crate::http::mw::ExtractDeviceInfo;
 use crate::http::vo::error::AppError;
 use crate::http::vo::login::*;
 use crate::http::vo::*;

@@ -2,18 +2,18 @@ mod biz;
 mod config;
 mod http;
 
-use crate::config::{AppConfig, AppState};
+use crate::config::{AppSettings, AppState};
 use anyhow::Result;
 use axum::{
-    Form, Router,
-    error_handling::HandleErrorLayer,
-    extract::{Json, Path, Query},
+    error_handling::HandleErrorLayer, extract::{Json, Path, Query},
     http::{
-        HeaderMap, HeaderName, HeaderValue, StatusCode,
-        header::{self, COOKIE},
+        header::{self, COOKIE}, HeaderMap, HeaderName, HeaderValue,
+        StatusCode,
     },
     response::IntoResponse,
     routing::{get, post},
+    Form,
+    Router,
 };
 use headers::UserAgent;
 use serde::{Deserialize, Serialize};
@@ -27,14 +27,17 @@ use tower_http::{auth, timeout::TimeoutLayer, trace::TraceLayer};
 use tracing_subscriber::filter::LevelFilter;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
-use tracing_subscriber::{Layer, fmt};
+use tracing_subscriber::{fmt, Layer};
 
 #[tokio::main]
 async fn main() -> Result<()> {
     let path = env::current_dir()?;
     println!("The current directory is {}", path.display());
 
-    let config = Arc::new(AppConfig::init()?);
+    let manifest_dir = env!("CARGO_MANIFEST_DIR");
+    println!("Cargo Manifest Directory: {}", manifest_dir);
+
+    let settings = Arc::new(AppSettings::init()?);
 
     let json_log = File::create("stars.log")?;
     tracing_subscriber::registry()
@@ -54,11 +57,7 @@ async fn main() -> Result<()> {
         )
         .init();
 
-    let state = AppState::from(Arc::clone(&config))
-        .await
-        .expect("invalid configuration");
-
-    http::serve(state).await;
+    http::serve(settings).await;
     log::info!("shutting down");
     Ok(())
 }

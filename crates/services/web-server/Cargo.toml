@@ -33,3 +33,4 @@ phonenumber.workspace = true
 sha2.workspace = true
 hex.workspace = true
 config.workspace = true
+rsa.workspace = true

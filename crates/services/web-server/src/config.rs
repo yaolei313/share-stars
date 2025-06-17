@@ -2,22 +2,24 @@ use anyhow::Context;
 use anyhow::Result;
 use axum::extract::FromRef;
 use config::{Config, File};
+use jsonwebtoken::{DecodingKey, EncodingKey};
 use lib_core::db::repositories::{PgPassportRepository, PgPhoneMappingRepository};
 use serde::Deserialize;
-use sqlx::PgPool;
 use sqlx::postgres::PgPoolOptions;
-use std::env;
+use sqlx::PgPool;
+use std::io::{Error, ErrorKind};
 use std::str::FromStr;
 use std::sync::Arc;
+use std::{env, fs};
 
 #[derive(Debug, Deserialize)]
-struct Server {
+struct ServerSetting {
     host: String,
     port: u16,
 }
 
 #[derive(Debug, Deserialize)]
-struct Database {
+struct DatabaseSetting {
     database_url: String,
     min_connections: u32,
     max_connections: u32,
@@ -25,28 +27,32 @@ struct Database {
 }
 
 #[derive(Debug, Deserialize)]
-struct Key {
+struct KeySetting {
     kid: String,
     public_key_path: String,
     private_key_path: String,
 }
 #[derive(Debug, Deserialize)]
-struct Jwt {
-    keys: Vec<Key>,
+struct JwtSetting {
+    keys: Vec<KeySetting>,
     issuer: String,
     expire_seconds: u64,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Deserialize)]
 pub enum Env {
+    #[serde(rename = "dev")]
     DEV,
+    #[serde(rename = "test")]
     TEST,
+    #[serde(rename = "staging")]
     STAGING,
+    #[serde(rename = "production")]
     PRODUCTION,
 }
 
 impl FromStr for Env {
-    type Err = ();
+    type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
@@ -54,7 +60,7 @@ impl FromStr for Env {
             "test" => Ok(Env::TEST),
             "staging" => Ok(Env::STAGING),
             "prod" => Ok(Env::PRODUCTION),
-            _ => Err(()),
+            _ => Err(Error::new(ErrorKind::InvalidData, "unknown err")),
         }
     }
 }
@@ -62,16 +68,19 @@ impl FromStr for Env {
 #[derive(Debug, Deserialize)]
 pub struct AppSettings {
     pub env: Env,
-    pub server: Server,
-    pub database: Database,
-    pub jwt: Jwt,
+    pub server: ServerSetting,
+    pub database: DatabaseSetting,
+    pub jwt: JwtSetting,
 }
 
 impl AppSettings {
     pub fn init() -> Result<Self> {
         dotenv::from_filename(".env").ok();
 
-        let run_mode = env::var("RUN_MODE").unwrap_or_else(|_| "dev".into());
+        let run_mode = env::var("RUN_MODE")
+            .unwrap_or_else(|_| "dev".into())
+            .to_lowercase();
+        let database_url = env::var("DATABASE_URL")?;
 
         // let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
         // let jwt_secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
@@ -87,12 +96,16 @@ impl AppSettings {
                     .list_separator(",")
                     .ignore_empty(true),
             )
+            .set_default("database.database_url", database_url)?
+            .set_default("env", run_mode)?
             .build()?;
-        let mut app_settings: AppSettings = settings.try_deserialize()?;
+        let app_settings: AppSettings = settings.try_deserialize()?;
 
-        app_settings.env = run_mode.into();
-        app_settings.database.database_url = env::var("DATABASE_URL")?;
         Ok(app_settings)
+    }
+
+    pub fn get_bind_addr(&self) -> String {
+        format!("{}:{}", self.server.host, self.server.port)
     }
 }
 
@@ -106,8 +119,8 @@ pub struct AppState {
 #[derive(Clone)]
 pub struct JwtKey {
     kid: String,
-    public_key: String,
-    private_key: String,
+    encoding_key: EncodingKey,
+    decoding_key: DecodingKey,
 }
 #[derive(Clone)]
 pub struct JwtManager {
@@ -117,8 +130,30 @@ pub struct JwtManager {
 }
 
 impl JwtManager {
-    pub fn new(settings: &Jwt) -> Result<Self> {
-        todo!()
+    pub fn new(settings: &JwtSetting) -> Result<Self> {
+        let tmp_keys = settings
+            .keys
+            .iter()
+            .map(|k| {
+                let rsa_private_pem = fs::read_to_string(&k.private_key_path)?;
+                let rsa_public_pem = fs::read_to_string(&k.public_key_path)?;
+
+                let encoding_key = EncodingKey::from_rsa_pem(rsa_private_pem.as_bytes())?;
+                let decoding_key = DecodingKey::from_rsa_pem(rsa_public_pem.as_bytes())?;
+
+                Ok(JwtKey {
+                    kid: k.kid.clone(),
+                    encoding_key,
+                    decoding_key,
+                })
+            })
+            .collect::<Result<Vec<_>>>()?;
+
+        Ok(JwtManager {
+            keys: tmp_keys,
+            issuer: settings.issuer.clone(),
+            expire_seconds: settings.expire_seconds,
+        })
     }
 }
 

@@ -2,11 +2,12 @@ use crate::config::AppState;
 use crate::http::handler::{
     login_by_password, login_by_sms, profile, profile_me, register_by_email, test,
 };
+use crate::http::mw;
 use axum::error_handling::HandleErrorLayer;
 use axum::http::{Method, StatusCode, Uri};
 use axum::response::IntoResponse;
 use axum::routing::{get, post};
-use axum::{BoxError, Router};
+use axum::{middleware, BoxError, Router};
 use std::borrow::Cow;
 use std::time::Duration;
 use tower::ServiceBuilder;
@@ -31,6 +32,10 @@ pub fn init_router(state: AppState) -> Router {
         .nest("/api", router)
         .layer(
             ServiceBuilder::new()
+                .layer(middleware::from_fn_with_state(
+                    state.clone(),
+                    mw::auth_middleware,
+                ))
                 // Handle errors from middleware
                 .layer(HandleErrorLayer::new(handle_error))
                 .concurrency_limit(1024)
