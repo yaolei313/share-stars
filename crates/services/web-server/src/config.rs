@@ -1,15 +1,19 @@
+use crate::biz::ServiceState;
 use anyhow::Context;
 use anyhow::Result;
 use axum::extract::FromRef;
 use config::{Config, File};
 use jsonwebtoken::{DecodingKey, EncodingKey};
-use lib_core::db::repositories::{PgPassportRepository, PgPhoneMappingRepository};
+use lib_core::RepositoryState;
 use serde::Deserialize;
-use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
+use sqlx::postgres::PgPoolOptions;
+use std::collections::HashMap;
 use std::io::{Error, ErrorKind};
+use std::iter::Map;
 use std::str::FromStr;
 use std::sync::Arc;
+use std::time::Duration;
 use std::{env, fs};
 
 #[derive(Debug, Deserialize)]
@@ -27,16 +31,24 @@ struct DatabaseSetting {
 }
 
 #[derive(Debug, Deserialize)]
-struct KeySetting {
-    kid: String,
-    public_key_path: String,
-    private_key_path: String,
+pub struct KeySetting {
+    pub kid: String,
+    pub public_key_path: String,
+    pub private_key_path: String,
 }
 #[derive(Debug, Deserialize)]
-struct JwtSetting {
-    keys: Vec<KeySetting>,
-    issuer: String,
-    expire_seconds: u64,
+pub struct JwtSetting {
+    pub keys: Vec<KeySetting>,
+    pub issuer: String,
+    pub expire_seconds: u32,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SmsSetting {
+    pub url: String,
+    pub account_sid: String,
+    pub auth_token: String,
+    pub status_callback_url: String,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -71,6 +83,7 @@ pub struct AppSettings {
     pub server: ServerSetting,
     pub database: DatabaseSetting,
     pub jwt: JwtSetting,
+    pub sms: SmsSetting,
 }
 
 impl AppSettings {
@@ -112,82 +125,29 @@ impl AppSettings {
 #[derive(FromRef, Clone)]
 pub struct AppState {
     pub env: Env,
-    pub jwt_manager: Arc<JwtManager>,
-    pub repository: Repository,
-}
-
-#[derive(Clone)]
-pub struct JwtKey {
-    kid: String,
-    encoding_key: EncodingKey,
-    decoding_key: DecodingKey,
-}
-#[derive(Clone)]
-pub struct JwtManager {
-    pub keys: Vec<JwtKey>,
-    pub issuer: String,
-    pub expire_seconds: u64,
-}
-
-impl JwtManager {
-    pub fn new(settings: &JwtSetting) -> Result<Self> {
-        let tmp_keys = settings
-            .keys
-            .iter()
-            .map(|k| {
-                let rsa_private_pem = fs::read_to_string(&k.private_key_path)?;
-                let rsa_public_pem = fs::read_to_string(&k.public_key_path)?;
-
-                let encoding_key = EncodingKey::from_rsa_pem(rsa_private_pem.as_bytes())?;
-                let decoding_key = DecodingKey::from_rsa_pem(rsa_public_pem.as_bytes())?;
-
-                Ok(JwtKey {
-                    kid: k.kid.clone(),
-                    encoding_key,
-                    decoding_key,
-                })
-            })
-            .collect::<Result<Vec<_>>>()?;
-
-        Ok(JwtManager {
-            keys: tmp_keys,
-            issuer: settings.issuer.clone(),
-            expire_seconds: settings.expire_seconds,
-        })
-    }
-}
-
-#[derive(Clone)]
-pub struct Repository {
-    pub passport_repo: Arc<PgPassportRepository>,
-    pub phone_mapping_repo: Arc<PgPhoneMappingRepository>,
-}
-
-impl Repository {
-    pub fn new(db_pool: PgPool) -> Self {
-        Repository {
-            passport_repo: Arc::new(PgPassportRepository::new(db_pool.clone())),
-            phone_mapping_repo: Arc::new(PgPhoneMappingRepository::new(db_pool.clone())),
-        }
-    }
+    pub service_state: Arc<ServiceState>,
+    pub repository_state: Arc<RepositoryState>,
 }
 
 impl AppState {
     pub async fn from(config: Arc<AppSettings>) -> Result<AppState> {
+        log::info!("creating app state");
         let db_pool = PgPoolOptions::new()
             // The default connection limit for a Postgres server is 100 connections, minus 3 for superusers.
             // Since we're using the default superuser we don't have to worry about this too much,
             // although we should leave some connections available for manual access.
             .min_connections(config.database.min_connections)
             .max_connections(config.database.max_connections)
+            .acquire_timeout(Duration::from_secs(2))
             .connect(&config.database.database_url)
             .await
             .context("could not connect to database_url")?;
-        let repository = Repository::new(db_pool);
+        let repository_state = Arc::new(RepositoryState::new(db_pool));
+        let service_state = Arc::new(ServiceState::new(config.clone())?);
         let state = AppState {
             env: config.env.clone(),
-            jwt_manager: Arc::new(JwtManager::new(&config.jwt)?),
-            repository,
+            service_state,
+            repository_state,
         };
         Ok(state)
     }

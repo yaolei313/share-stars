@@ -22,4 +22,10 @@ kid = "v2"
 private_key_path = "config/private_key2.pem"
 public_key_path = "config/public_key2.pem"
 
+[sms]
+url = ""
+account_sid = ""
+auth_token = ""
+status_callback_url = ""
+
 

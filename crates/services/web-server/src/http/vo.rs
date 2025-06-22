@@ -4,6 +4,7 @@ pub mod register;
 
 use crate::http::vo::error::AppError;
 use axum::response::IntoResponse;
+use lib_macro_derive::BindCode;
 use serde::Serialize;
 use std::fmt::Display;
 use validator::ValidationErrors;
@@ -58,12 +59,27 @@ where
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, BindCode)]
 pub enum PlatformEnum {
-    Web = 1,
-    AppIos = 2,
-    AppAndroid = 3,
-    Pc = 4,
+    #[code(1)]
+    Web,
+    #[code(2)]
+    AppIos,
+    #[code(3)]
+    AppAndroid,
+    #[code(4)]
+    Pc,
+}
+
+impl Display for PlatformEnum {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            PlatformEnum::Web => write!(f, "web"),
+            PlatformEnum::AppIos => write!(f, "AppIos"),
+            PlatformEnum::AppAndroid => write!(f, "AppAndroid"),
+            PlatformEnum::Pc => write!(f, "Pc"),
+        }
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -71,6 +87,6 @@ pub struct DeviceInfo {
     pub platform: PlatformEnum,
     pub ip: Option<String>,
     pub user_agent: Option<String>,
-    pub device_id: Option<String>,
+    pub device_fp: Option<String>,
     pub request_id: Option<String>,
 }

@@ -49,3 +49,4 @@ rsa = { version = "0.9.8", features = ["sha2", "pem", "pkcs5", "default"] }
 rand = "0.9.1"
 pkcs8 = { version = "0.10", features = ["std", "alloc", "pem", "encryption"] }
 config = "0.15.11"
+snowflaked = { version = "1.0.3" }

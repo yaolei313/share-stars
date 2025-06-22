@@ -1,7 +1,7 @@
 use crate::biz::authn::base_login;
 use crate::biz::dto::AuthnTypeEnum;
 use crate::biz::security::{
-    add_password_error_count, exceed_password_error_limit, is_trusted_device,
+    add_password_error_count, is_exceed_password_error_limit, is_trusted_device,
 };
 use crate::config::AppState;
 use crate::http::vo::error::AppError;
@@ -17,12 +17,20 @@ pub async fn login_by_password(
     password: &str,
     device_info: &DeviceInfo,
 ) -> AppResult<LoginResult> {
-    let phone_mapping = state.repository.phone_mapping_repo.by_phone(phone).await?;
+    let phone_mapping = state
+        .repository_state
+        .phone_mapping_repo
+        .by_phone(phone)
+        .await?;
     let Some(PhoneMapping { user_id, .. }) = phone_mapping else {
         log::warn!("no phone mapping found. {}", phone);
         return Err(AppError::UnregisterPhone);
     };
-    let passport = state.repository.passport_repo.by_user_id(user_id).await?;
+    let passport = state
+        .repository_state
+        .passport_repo
+        .by_user_id(user_id)
+        .await?;
     let Some(passport) = passport else {
         log::warn!("no passport found. {} {}", phone, user_id);
         return Err(AppError::UnregisterPhone);
@@ -39,7 +47,7 @@ pub async fn login_by_password(
     }
 
     // 密码校验
-    if exceed_password_error_limit(user_id) {
+    if is_exceed_password_error_limit(user_id) {
         log::warn!("too many incorrect password attempts. {}", user_id);
         return Err(AppError::TooManyIncorrectPasswordAttempts);
     }
@@ -55,7 +63,7 @@ pub async fn login_by_password(
     }
 
     // 公共登陆逻辑
-    base_login::common_login(AuthnTypeEnum::Password, user_id, device_info).await
+    base_login::common_login(state, AuthnTypeEnum::Password, user_id, device_info).await
 }
 
 fn check_pwd(input_password: &str, salt: &str, password_sha256: &str) -> bool {

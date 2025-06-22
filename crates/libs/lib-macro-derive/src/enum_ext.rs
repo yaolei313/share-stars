@@ -22,7 +22,10 @@ pub(crate) fn try_expand_bind_code_derive(input: DeriveInput) -> Result<TokenStr
 fn impl_enum(enum_name: &Ident, data_enum: DataEnum) -> Result<TokenStream> {
     // Collect all the match arms for the `code()` method.
     let mut match_arms = Vec::new();
+    let mut from_arms = Vec::new();
     let mut seen_codes = HashSet::new();
+
+    let mut exists_unnamed = false;
 
     for variant in &data_enum.variants {
         let variant_name = &variant.ident; // The name of the variant (e.g., Success, Fail)
@@ -57,23 +60,39 @@ fn impl_enum(enum_name: &Ident, data_enum: DataEnum) -> Result<TokenStream> {
         // If it does, we need to match with `_` to ignore the field data.
         let match_pattern = match variant.fields {
             syn::Fields::Unnamed(_) => {
+                exists_unnamed = true;
                 // If it has unnamed fields (e.g., `Fail(String)`), match with `VariantName(_)`.
-                quote! { #enum_name::#variant_name(_) }
+                quote! { #enum_name::#variant_name(_) => #code_value, }
             }
             _ => {
                 // Otherwise (unit or named fields), match directly with `VariantName`.
                 // Note: For named fields, you'd typically destructure them too, but for `code()`
                 // which only depends on the variant name, we can treat them like unit variants.
-                quote! { #enum_name::#variant_name }
+                quote! { #enum_name::#variant_name => #code_value, }
             }
         };
 
         // Add the match arm: `BizError::VariantName => code_value,`
         // or `BizError::VariantName(_) => code_value,`
-        match_arms.push(quote! {
-            #match_pattern => #code_value,
-        });
+        match_arms.push(match_pattern);
+
+        from_arms.push(quote! {
+            #code_value => Some(#enum_name::#variant_name),
+        })
     }
+
+    let from_code_fn = if !exists_unnamed {
+        quote! {
+            pub fn from_code(code: i32) -> Option<Self> {
+                match code {
+                    #(#from_arms)*
+                    _ => None,
+                }
+            }
+        }
+    } else {
+        quote! {}
+    };
 
     // Generate the `impl` block for the enum.
     let expanded = quote! {
@@ -83,6 +102,8 @@ fn impl_enum(enum_name: &Ident, data_enum: DataEnum) -> Result<TokenStream> {
                     #(#match_arms)* // Expand all collected match arms
                 }
             }
+
+            #from_code_fn
         }
     };
 

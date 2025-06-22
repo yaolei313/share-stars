@@ -1,6 +1,7 @@
 mod login;
 mod profile;
 mod register;
+mod sms;
 mod test;
 
 pub use login::*;

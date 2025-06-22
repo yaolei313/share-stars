@@ -63,6 +63,7 @@ pub enum AppError {
     #[error("operation not allowed")]
     Forbidden,
 
+    // --below system error--
     #[code(1000)]
     #[error("database operation failed: {0}")]
     Database(#[from] sqlx::Error),
@@ -74,6 +75,10 @@ pub enum AppError {
     #[code(1002)]
     #[error("jsonwebtoken operation failed: {0}")]
     Token(#[from] jsonwebtoken::errors::Error),
+
+    #[code(1003)]
+    #[error("invalid config: {0}")]
+    InvalidConfig(&'static str),
 }
 
 impl IntoResponse for AppError {

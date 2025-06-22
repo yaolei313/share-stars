@@ -4,6 +4,7 @@ use axum::ServiceExt;
 use std::net::SocketAddr;
 use std::sync::Arc;
 
+pub mod common;
 mod handler;
 mod mw;
 mod router;
