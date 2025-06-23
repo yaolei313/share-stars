@@ -13,17 +13,17 @@ use sha2::{Digest, Sha256};
 
 pub async fn login_by_password(
     state: AppState,
-    phone: &str,
+    e64phone: &str,
     password: &str,
     device_info: &DeviceInfo,
 ) -> AppResult<LoginResult> {
     let phone_mapping = state
         .repository_state
         .phone_mapping_repo
-        .by_phone(phone)
+        .by_phone(e64phone)
         .await?;
     let Some(PhoneMapping { user_id, .. }) = phone_mapping else {
-        log::warn!("no phone mapping found. {}", phone);
+        log::warn!("no phone mapping found. {}", e64phone);
         return Err(AppError::UnregisterPhone);
     };
     let passport = state
@@ -32,7 +32,7 @@ pub async fn login_by_password(
         .by_user_id(user_id)
         .await?;
     let Some(passport) = passport else {
-        log::warn!("no passport found. {} {}", phone, user_id);
+        log::warn!("no passport found. {} {}", e64phone, user_id);
         return Err(AppError::UnregisterPhone);
     };
 

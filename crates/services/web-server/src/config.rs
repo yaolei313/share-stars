@@ -6,8 +6,8 @@ use config::{Config, File};
 use jsonwebtoken::{DecodingKey, EncodingKey};
 use lib_core::RepositoryState;
 use serde::Deserialize;
-use sqlx::PgPool;
 use sqlx::postgres::PgPoolOptions;
+use sqlx::PgPool;
 use std::collections::HashMap;
 use std::io::{Error, ErrorKind};
 use std::iter::Map;
@@ -45,9 +45,9 @@ pub struct JwtSetting {
 
 #[derive(Debug, Deserialize)]
 pub struct SmsSetting {
-    pub url: String,
     pub account_sid: String,
     pub auth_token: String,
+    pub from_phone: String,
     pub status_callback_url: String,
 }
 

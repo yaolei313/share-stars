@@ -23,9 +23,9 @@ pub async fn login_by_password(
         return Err(AppError::InvalidArgument(err.to_string()));
     }
 
-    let std_phone = common::validate_then_format_phone_number(&payload.phone)?;
-    log::info!("login by password. {}", std_phone);
-    authn::login_by_password(state, &std_phone, &payload.password, &device_info)
+    let e64phone = common::validate_then_format_phone_number(&payload.phone)?;
+    log::info!("login by password. {}", e64phone);
+    authn::login_by_password(state, &e64phone, &payload.password, &device_info)
         .await
         .map(|r| Json(RespVo::success(r)))
 }
@@ -39,9 +39,9 @@ pub async fn login_by_sms(
     if let Err(err) = payload.validate() {
         return Err(AppError::InvalidArgument(err.to_string()));
     }
-    let std_phone = common::validate_then_format_phone_number(&payload.phone)?;
-    log::info!("login by sms. {}", std_phone);
-    authn::login_by_sms(state, &std_phone, &payload.sms_code, &device_info)
+    let e64phone = common::validate_then_format_phone_number(&payload.phone)?;
+    log::info!("login by sms. {}", e64phone);
+    authn::login_by_sms(state, &e64phone, &payload.sms_code, &device_info)
         .await
         .map(|r| Json(RespVo::success(r)))
 }

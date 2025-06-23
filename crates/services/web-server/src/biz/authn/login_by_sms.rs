@@ -4,7 +4,7 @@ use crate::http::vo::{AppResult, DeviceInfo};
 
 pub async fn login_by_sms(
     state: AppState,
-    phone: &str,
+    e64phone: &str,
     sms_code: &str,
     device_info: &DeviceInfo,
 ) -> AppResult<LoginResult> {

@@ -35,3 +35,4 @@ hex.workspace = true
 config.workspace = true
 rsa.workspace = true
 snowflaked.workspace = true
+twilio.workspace = true

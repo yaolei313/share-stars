@@ -1,6 +1,7 @@
 pub mod error;
 pub mod login;
 pub mod register;
+pub mod sms;
 
 use crate::http::vo::error::AppError;
 use axum::response::IntoResponse;

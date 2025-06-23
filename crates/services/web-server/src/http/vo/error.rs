@@ -1,9 +1,10 @@
 use crate::http::vo::RespVo;
-use axum::Json;
 use axum::response::{IntoResponse, Response};
+use axum::Json;
 use lib_macro_derive::BindCode;
 use std::io;
 use thiserror::Error;
+use twilio::TwilioError;
 
 #[derive(Error, Debug, BindCode)]
 pub enum AppError {
@@ -79,6 +80,10 @@ pub enum AppError {
     #[code(1003)]
     #[error("invalid config: {0}")]
     InvalidConfig(&'static str),
+
+    #[code(1004)]
+    #[error("sms send fail: {0}")]
+    SmsFail(#[from] TwilioError),
 }
 
 impl IntoResponse for AppError {
