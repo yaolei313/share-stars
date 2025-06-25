@@ -1,0 +1,23 @@
+services:
+  db:
+    container_name: share-stars-postgres
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_DB: stars
+      POSTGRES_USER: stars
+      POSTGRES_PASSWORD: stars123
+    volumes:
+      - ./build/postgres:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    container_name: share-stars-redis
+    image: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./build/redis:/data
+      - ./build/redis.conf:/etc/redis.conf

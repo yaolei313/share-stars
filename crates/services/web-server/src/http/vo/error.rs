@@ -2,6 +2,7 @@ use crate::http::vo::RespVo;
 use axum::response::{IntoResponse, Response};
 use axum::Json;
 use lib_macro_derive::BindCode;
+use redis::RedisError;
 use std::io;
 use thiserror::Error;
 use twilio::TwilioError;
@@ -56,6 +57,10 @@ pub enum AppError {
     #[error("login attempt from an unrecognized device")]
     Upgraded2FAPushCode,
 
+    #[code(109)]
+    #[error("invalid sms code")]
+    InvalidSmsCode,
+
     #[code(401)]
     #[error("authentication required")]
     Unauthorized,
@@ -83,7 +88,11 @@ pub enum AppError {
 
     #[code(1004)]
     #[error("sms send fail: {0}")]
-    SmsFail(#[from] TwilioError),
+    TwilioError(#[from] TwilioError),
+
+    #[code(1005)]
+    #[error("sms send fail: {0}")]
+    RedisError(#[from] RedisError),
 }
 
 impl IntoResponse for AppError {

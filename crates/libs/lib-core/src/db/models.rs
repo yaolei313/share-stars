@@ -5,9 +5,9 @@ mod trusted_device;
 pub use passport::*;
 pub use phone_mapping::*;
 
-use chrono::prelude::*;
-use serde::{Deserialize, Serialize};
-use sqlx::FromRow;
+// use chrono::prelude::*;
+// use serde::{Deserialize, Serialize};
+// use sqlx::FromRow;
 // use uuid::Uuid;
 //
 // #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, sqlx::Type, PartialEq)]

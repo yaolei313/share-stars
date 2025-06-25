@@ -1,3 +1,7 @@
+drop table if exists "user";
+drop type if exists user_role;
+drop extension if exists "uuid-ossp";
+
 -- Add up migration script here
 -- create type user_role as enum('admin','user');
 --

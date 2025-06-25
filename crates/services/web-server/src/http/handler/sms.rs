@@ -18,10 +18,11 @@ pub async fn send_sms(
     if let Err(err) = payload.validate() {
         return Err(AppError::InvalidArgument(err.to_string()));
     }
-    let e164phone = common::validate_then_format_phone_number(&payload.phone)?;
-    log::info!("send sms. {}", e164phone);
+    let e164_phone = common::validate_then_format_phone_number(&payload.phone)?;
+    log::info!("send sms. {}", e164_phone);
 
     // 业务校验
-    security::check_send_sms_limit(&state, &e164phone, &device_info).await?;
+    security::check_send_sms_limit(&state, &e164_phone, &device_info)?;
+
     todo!()
 }

@@ -1,5 +1,4 @@
 use crate::pg_meta::ColumnInfo;
-use sqlx::FromRow;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::Write;

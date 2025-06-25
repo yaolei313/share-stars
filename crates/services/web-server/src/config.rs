@@ -31,6 +31,11 @@ struct DatabaseSetting {
 }
 
 #[derive(Debug, Deserialize)]
+struct RedisSetting {
+    pub url: String,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct KeySetting {
     pub kid: String,
     pub public_key_path: String,
@@ -82,6 +87,7 @@ pub struct AppSettings {
     pub env: Env,
     pub server: ServerSetting,
     pub database: DatabaseSetting,
+    pub redis: RedisSetting,
     pub jwt: JwtSetting,
     pub sms: SmsSetting,
 }
@@ -125,8 +131,9 @@ impl AppSettings {
 #[derive(FromRef, Clone)]
 pub struct AppState {
     pub env: Env,
-    pub service_state: Arc<ServiceState>,
     pub repository_state: Arc<RepositoryState>,
+    pub redis_client: Arc<redis::Client>,
+    pub service_state: Arc<ServiceState>,
 }
 
 impl AppState {
@@ -143,11 +150,17 @@ impl AppState {
             .await
             .context("could not connect to database_url")?;
         let repository_state = Arc::new(RepositoryState::new(db_pool));
-        let service_state = Arc::new(ServiceState::new(config.clone())?);
+        let redis_client = Arc::new(redis::Client::open(config.redis.url.as_str())?);
+        let service_state = Arc::new(ServiceState::new(
+            repository_state.clone(),
+            redis_client.clone(),
+            config.clone(),
+        )?);
         let state = AppState {
             env: config.env.clone(),
-            service_state,
+            redis_client,
             repository_state,
+            service_state,
         };
         Ok(state)
     }

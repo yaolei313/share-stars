@@ -51,3 +51,4 @@ pkcs8 = { version = "0.10", features = ["std", "alloc", "pem", "encryption"] }
 config = "0.15.11"
 snowflaked = { version = "1.0.3" }
 twilio = { version = "1.1.0" }
+redis = { version = "0.32.2", features = ["tokio-comp", "ahash"] }
