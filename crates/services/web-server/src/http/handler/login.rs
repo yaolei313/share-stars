@@ -1,38 +1,52 @@
+use crate::biz::authn;
 use crate::config::AppState;
+use crate::http::mw::ExtractDeviceInfo;
+use crate::http::vo;
+use crate::http::vo::error::AppError;
 use crate::http::vo::login::*;
 use crate::http::vo::*;
+use axum::extract::Json;
 use axum::extract::State;
-use axum::{extract::Json, http::HeaderMap};
+use lib_core::db::models::LoginPrincipal;
+use phonenumber::Mode;
 use std::borrow::Borrow;
+use validator::Validate;
 
 ///
 ///
 pub async fn login_by_password(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    ExtractDeviceInfo(device_info): ExtractDeviceInfo,
     Json(payload): Json<LoginByPasswordReq>,
-) -> Json<RespVo<LoginResult>> {
-    for (key, value) in &headers {
-        log::info!("header: {} {}", key, value.to_str().ok().unwrap());
+) -> AppResult<Json<RespVo<LoginResult>>> {
+    // 校验参数
+    if let Err(err) = payload.validate() {
+        return Err(AppError::InvalidArgument(err.to_string()));
     }
-    if &payload.phone == "18866668888" && &payload.password == "abc123" {
-        let result = LoginResult {
-            user_id: 123,
-            new_register: false,
-            access_token: Some(String::from("123")),
-            expire_seconds: 0,
-            refresh_token: Some(String::from("refresh token")),
-        };
-        let vo = RespVo::success(result);
-        return Json(vo);
-    }
-    let vo = RespVo::bad_request_with_message(String::from("forbidden"));
-    Json(vo)
+
+    let e164_phone = lib_utils::validate_then_format_phone_number(&payload.phone)
+        .map_err(|e| AppError::InvalidPhoneNumber(payload.phone.to_string()))?;
+    log::info!("login by password. {}", e164_phone);
+    let principal = LoginPrincipal::Phone(&e164_phone);
+    authn::login_by_password(state, &principal, &payload.password, &device_info)
+        .await
+        .map(|r| Json(success_resp(r)))
 }
 
 pub async fn login_by_sms(
     State(state): State<AppState>,
+    ExtractDeviceInfo(device_info): ExtractDeviceInfo,
     Json(payload): Json<LoginBySmsReq>,
-) -> Json<LoginResult> {
-    todo!()
+) -> AppResult<Json<RespVo<LoginResult>>> {
+    // 校验参数
+    if let Err(err) = payload.validate() {
+        return Err(AppError::InvalidArgument(err.to_string()));
+    }
+
+    let e164_phone = lib_utils::validate_then_format_phone_number(&payload.phone)
+        .map_err(|e| AppError::InvalidPhoneNumber(payload.phone.to_string()))?;
+    log::info!("login by sms. {}", e164_phone);
+    authn::login_by_sms(state, &e164_phone, &payload.sms_code, &device_info)
+        .await
+        .map(|r| Json(success_resp(r)))
 }

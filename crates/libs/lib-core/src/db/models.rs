@@ -1,41 +1,61 @@
-use chrono::prelude::*;
-use serde::{Deserialize, Serialize};
-use uuid::Uuid;
+mod passport;
+mod phone_mapping;
+mod trusted_device;
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, sqlx::Type, PartialEq)]
-#[sqlx(type_name = "user_role", rename_all = "lowercase")]
-pub enum UserRole {
-    Admin,
-    User,
+use lib_macro_derive::BindCode;
+pub use passport::*;
+pub use phone_mapping::*;
+use serde::Deserialize;
+use std::fmt::{Display, Formatter};
+
+#[derive(Debug, Deserialize, BindCode)]
+pub enum OidcProviderEnum {
+    #[code(1)]
+    Facebook,
+    #[code(2)]
+    Google,
+    #[code(3)]
+    Apple,
 }
 
-impl UserRole {
-    pub fn to_str(&self) -> &'static str {
+#[derive(Debug)]
+pub enum LoginPrincipal<'a> {
+    Phone(&'a str),
+    Email(&'a str),
+    OpenId {
+        provider: OidcProviderEnum,
+        open_id: &'a str,
+    },
+}
+
+impl<'a> Display for LoginPrincipal<'a> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            UserRole::Admin => "admin",
-            UserRole::User => "user",
+            LoginPrincipal::Phone(principal) => write!(f, "{}", principal),
+            LoginPrincipal::Email(principal) => write!(f, "{}", principal),
+            LoginPrincipal::OpenId { provider, open_id } => {
+                write!(f, "{} {}", provider.code(), open_id)
+            }
         }
     }
 }
 
-impl Default for UserRole {
-    fn default() -> Self {
-        UserRole::User
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, sqlx::Type, PartialEq)]
-pub struct User {
-    pub id: Uuid,
-    pub name: String,
-    pub email: String,
-    pub password: String,
-    pub role: UserRole,
-    pub verified: bool,
-    pub verification_token: Option<String>,
-    pub token_expires_at: Option<DateTime<Utc>>,
-    #[serde(rename = "createdAt")]
-    pub created_at: DateTime<Utc>,
-    #[serde(rename = "updatedAt")]
-    pub updated_at: DateTime<Utc>,
-}
+// use chrono::prelude::*;
+// use serde::{Deserialize, Serialize};
+// use sqlx::FromRow;
+// use uuid::Uuid;
+//
+// #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, sqlx::Type, PartialEq)]
+// pub struct User {
+//     pub id: Uuid,
+//     pub name: String,
+//     pub email: String,
+//     pub password: String,
+//     pub verified: bool,
+//     pub verification_token: Option<String>,
+//     pub token_expires_at: Option<DateTime<Utc>>,
+//     #[serde(rename = "createdAt")]
+//     pub created_at: DateTime<Utc>,
+//     #[serde(rename = "updatedAt")]
+//     pub updated_at: DateTime<Utc>,
+// }

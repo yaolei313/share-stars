@@ -1,14 +1,9 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
+mod id_generator;
+mod path_ext;
+mod phone_ext;
+mod str_ext;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-}
+pub use id_generator::*;
+pub use path_ext::*;
+pub use phone_ext::*;
+pub use str_ext::*;

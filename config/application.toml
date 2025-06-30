@@ -1,0 +1,36 @@
+[server]
+port = 8080
+host = "0.0.0.0"
+worker_id = 1
+
+[database]
+min_connections = 5
+max_connections = 20
+idle_timeout_seconds = 30
+
+[redis]
+url = "redis://127.0.0.1:6379"
+
+[jwt]
+issuer = "https://accounts.share-stars.com"
+audience = "https://www.share-stars.com/api"
+expire_seconds = 3600
+
+[[jwt.keys]]
+kid = "v1"
+private_key_path = "config/private_key1.pem"
+public_key_path = "config/public_key1.pem"
+
+
+[[jwt.keys]]
+kid = "v2"
+private_key_path = "config/private_key2.pem"
+public_key_path = "config/public_key2.pem"
+
+[sms]
+account_sid = ""
+auth_token = ""
+from_phone = ""
+status_callback_url = ""
+
+

@@ -1,6 +1,6 @@
 use crate::config::AppState;
-use crate::http::middleware::CurrentUser;
-use crate::http::vo::RespVo;
+use crate::http::mw::CurrentUser;
+use crate::http::vo::{RespVo, success_resp};
 use axum::Json;
 use axum::extract::{Path, Query, State};
 use std::collections::HashMap;
@@ -9,7 +9,7 @@ pub async fn profile_me(
     State(state): State<AppState>,
     current_user: CurrentUser,
 ) -> Json<RespVo<String>> {
-    Json(RespVo::success("hello world".into()))
+    Json(success_resp("hello world".into()))
 }
 
 pub async fn profile(

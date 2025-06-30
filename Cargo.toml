@@ -11,20 +11,21 @@ authors = ["yaolei313@gmail.com"]
 # local crates
 lib-utils = { path = "crates/libs/lib-utils", version = "0.0.0" }
 lib-core = { path = "crates/libs/lib-core", version = "0.0.0" }
+lib-macro = { path = "crates/libs/lib-macro", version = "0.0.0" }
+lib-macro-derive = { path = "crates/libs/lib-macro-derive", version = "0.0.0" }
 # other crates
-anyhow = "1.0.79"
+anyhow = "1.0.98"
 axum = { version = "0.8.4", features = ["macros", "http2"] }
-axum-extra = { version = "0.10.0", features = ["typed-header"] }
-chrono = { version = "0.4.40", features = ["serde"] }
+axum-extra = { version = "0.10.1", features = ["typed-header"] }
+chrono = { version = "0.4.41", features = ["serde"] }
 dotenv = "0.15.0"
 features = "0.10.0"
-headers = "0.4.0"
+headers = "0.4.1"
 jsonwebtoken = "9.3.1"
-runtime-tokio = "0.0.0"
-serde = { version = "1.0.196", features = ["derive"] }
-serde_json = "1.0.112"
-sqlx = { version = "0.8.3", features = ["runtime-tokio", "postgres", "chrono", "uuid"] }
-tokio = { version = "1.35.1", features = ["full"] }
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.140"
+sqlx = { version = "0.8.6", features = ["runtime-tokio", "postgres", "chrono"] }
+tokio = { version = "1.45.1", features = ["full"] }
 tower = { version = "0.5.2", features = [
     "util",
     "timeout",
@@ -33,10 +34,24 @@ tower = { version = "0.5.2", features = [
     "steer",
     "filter",
 ] }
-tower-http = { version = "0.6.2", features = ["full"] }
-tracing = "0.1.40"
-tracing-subscriber = { version = "0.3.18", features = ["json", "serde_json"] }
-uuid = { version = "1.16.0", features = ["serde"] }
+tower-http = { version = "0.6.6", features = ["full"] }
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.19", features = ["json", "serde_json"] }
 validator = { version = "0.20", features = ["derive"] }
 log = "0.4"
-clap = { version = "4.5.26", features = ["derive", "env"] }
+phf = { version = "0.11.3", features = ["macros"] }
+thiserror = { version = "2.0.12" }
+client-ip = "0.1.1"
+phonenumber = "0.3"
+sha2 = "0.10.8"
+hex = "0.4.3"
+rsa = { version = "0.9.8", features = ["sha2", "pem", "pkcs5", "default"] }
+rand = "0.9.1"
+pkcs8 = { version = "0.10", features = ["std", "alloc", "pem", "encryption"] }
+config = "0.15.11"
+sonyflake = "0.3"
+rs-snowflake = "*"
+twilio = { version = "1.1.0" }
+redis = { version = "0.32.2", features = ["tokio-comp"] }
+regex = "1"
+dirs = "6"
