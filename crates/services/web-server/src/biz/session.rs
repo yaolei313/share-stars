@@ -1,5 +1,5 @@
-mod gen_token;
 mod jwt_manager;
+mod token;
 
-pub use gen_token::*;
 pub use jwt_manager::*;
+pub use token::*;

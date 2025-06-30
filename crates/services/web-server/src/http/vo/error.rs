@@ -1,6 +1,6 @@
 use crate::http::vo::RespVo;
 use axum::response::{IntoResponse, Response};
-use axum::Json;
+use axum::{BoxError, Json};
 use lib_macro_derive::BindCode;
 use redis::RedisError;
 use std::io;
@@ -22,7 +22,7 @@ pub enum AppError {
     InvalidArgument(String),
 
     #[code(100)]
-    #[error("invalid phone number {0}")]
+    #[error("invalid phone number: {0}")]
     InvalidPhoneNumber(String),
 
     #[code(101)]
@@ -69,30 +69,46 @@ pub enum AppError {
     #[error("operation not allowed")]
     Forbidden,
 
+    #[code(408)]
+    #[error("request timeout")]
+    RequestTimeout,
+
+    #[code(500)]
+    #[error("internal server error: {0}")]
+    InternalServerError(#[from] BoxError),
+
+    #[code(503)]
+    #[error("service is overloaded, try again later")]
+    ServiceUnavailable,
+
     // --below system error--
     #[code(1000)]
     #[error("database operation failed: {0}")]
-    Database(#[from] sqlx::Error),
+    ComponentDatabase(#[from] sqlx::Error),
 
     #[code(1001)]
     #[error("I/O operation failed: {0}")]
-    Io(#[from] io::Error),
+    ComponentIo(#[from] io::Error),
 
     #[code(1002)]
     #[error("jsonwebtoken operation failed: {0}")]
-    Token(#[from] jsonwebtoken::errors::Error),
+    ComponentJwt(#[from] jsonwebtoken::errors::Error),
 
     #[code(1003)]
     #[error("invalid config: {0}")]
-    InvalidConfig(&'static str),
+    ComponentInvalidConfig(&'static str),
 
     #[code(1004)]
-    #[error("sms send fail: {0}")]
-    TwilioError(#[from] TwilioError),
+    #[error("twilio error: {0}")]
+    ComponentTwilioError(#[from] TwilioError),
 
     #[code(1005)]
-    #[error("sms send fail: {0}")]
-    RedisError(#[from] RedisError),
+    #[error("redis error")]
+    ComponentRedisError(#[from] RedisError),
+
+    #[code(1006)]
+    #[error("sonyflake error: {0}")]
+    IdGeneratorError(#[from] sonyflake::Error),
 }
 
 impl IntoResponse for AppError {

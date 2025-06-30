@@ -1,7 +1,7 @@
 use crate::config::AppState;
 use crate::http::vo::{AppResult, DeviceInfo};
 
-pub fn check_send_sms_limit(
+pub async fn check_send_sms_limit(
     state: &AppState,
     e64phone: &str,
     device_info: &DeviceInfo,

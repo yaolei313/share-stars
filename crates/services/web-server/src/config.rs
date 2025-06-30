@@ -6,8 +6,8 @@ use config::{Config, File};
 use jsonwebtoken::{DecodingKey, EncodingKey};
 use lib_core::RepositoryState;
 use serde::Deserialize;
-use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
+use sqlx::postgres::PgPoolOptions;
 use std::collections::HashMap;
 use std::io::{Error, ErrorKind};
 use std::iter::Map;
@@ -17,21 +17,22 @@ use std::time::Duration;
 use std::{env, fs};
 
 #[derive(Debug, Deserialize)]
-struct ServerSetting {
-    host: String,
-    port: u16,
+pub struct ServerSetting {
+    pub host: String,
+    pub port: u16,
+    pub worker_id: u16,
 }
 
 #[derive(Debug, Deserialize)]
-struct DatabaseSetting {
-    database_url: String,
-    min_connections: u32,
-    max_connections: u32,
-    idle_timeout_seconds: Option<u64>,
+pub struct DatabaseSetting {
+    pub database_url: String,
+    pub min_connections: u32,
+    pub max_connections: u32,
+    pub idle_timeout_seconds: Option<u64>,
 }
 
 #[derive(Debug, Deserialize)]
-struct RedisSetting {
+pub struct RedisSetting {
     pub url: String,
 }
 
@@ -44,6 +45,7 @@ pub struct KeySetting {
 #[derive(Debug, Deserialize)]
 pub struct JwtSetting {
     pub keys: Vec<KeySetting>,
+    pub audience: String,
     pub issuer: String,
     pub expire_seconds: u32,
 }
@@ -56,7 +58,7 @@ pub struct SmsSetting {
     pub status_callback_url: String,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 pub enum Env {
     #[serde(rename = "dev")]
     DEV,
@@ -152,6 +154,7 @@ impl AppState {
         let repository_state = Arc::new(RepositoryState::new(db_pool));
         let redis_client = Arc::new(redis::Client::open(config.redis.url.as_str())?);
         let service_state = Arc::new(ServiceState::new(
+            config.env.clone(),
             repository_state.clone(),
             redis_client.clone(),
             config.clone(),

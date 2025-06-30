@@ -1,25 +1,21 @@
+use crate::biz::dto::AuthnMethodEnum;
+use crate::biz::session;
 use crate::config::AppState;
-use crate::http::vo::AppResult;
 use crate::http::vo::error::AppError;
-use axum::RequestPartsExt;
+use crate::http::vo::AppResult;
 use axum::extract::{FromRequestParts, OptionalFromRequestParts, Request, State};
 use axum::http::header;
 use axum::http::request::Parts;
 use axum::middleware::Next;
 use axum::response::Response;
-use chrono::{DateTime, Utc};
-
-#[derive(Debug, Clone)]
-pub enum LoginMethodEnum {
-    PASSWORD,
-    SMS,
-}
+use axum::RequestPartsExt;
+use chrono::{DateTime, TimeZone, Utc};
 
 #[derive(Debug, Clone)]
 pub struct CurrentUser {
-    pub user_id: u64,
+    pub user_id: i64,
     pub login_at: DateTime<Utc>,
-    pub login_method: LoginMethodEnum,
+    pub authn_method: Option<AuthnMethodEnum>,
 }
 
 // 使用middle_ware::from_fn + Extension
@@ -35,12 +31,10 @@ pub async fn auth_middleware(
 
     let Some(token) = auth_header else {
         return Ok(next.run(request).await);
-        //return Err(AppError::Unauthorized);
     };
 
-    let Some(current_user) = validate_token(&state, token).await else {
+    let Some(current_user) = validate_token(&state, token) else {
         return Ok(next.run(request).await);
-        //return Err(AppError::Unauthorized);
     };
     request.extensions_mut().insert(current_user);
     Ok(next.run(request).await)
@@ -100,14 +94,17 @@ where
 //     }
 // }
 
-pub async fn validate_token(state: &AppState, token: &str) -> Option<CurrentUser> {
-    if "123" == token {
-        Some(CurrentUser {
-            user_id: 123456,
-            login_at: Default::default(),
-            login_method: LoginMethodEnum::PASSWORD,
-        })
-    } else {
-        None
-    }
+pub fn validate_token(state: &AppState, token: &str) -> Option<CurrentUser> {
+    let Some(claim) = session::validate_token(state, token) else {
+        return None;
+    };
+    let login_at: DateTime<Utc> = Utc
+        .timestamp_opt(claim.iat, 0)
+        .single()
+        .expect("invalid timestamp");
+    Some(CurrentUser {
+        user_id: claim.sub,
+        login_at,
+        authn_method: AuthnMethodEnum::from_code(claim.aum),
+    })
 }

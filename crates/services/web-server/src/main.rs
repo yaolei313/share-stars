@@ -57,7 +57,7 @@ async fn main() -> Result<()> {
         )
         .init();
 
-    http::serve(settings).await;
+    http::serve(settings).await?;
     log::info!("shutting down");
     Ok(())
 }

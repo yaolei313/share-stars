@@ -1,4 +1,4 @@
-use jsonwebtoken::{DecodingKey, EncodingKey};
+use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Validation};
 use std::collections::HashMap;
 use std::fs;
 use std::io::{Error, ErrorKind};
@@ -12,7 +12,9 @@ pub struct JwtKey {
 #[derive(Clone)]
 pub struct JwtManager {
     pub keys: HashMap<String, JwtKey>,
+    pub validation: Validation,
     pub issuer: String,
+    pub audience: String,
     pub expire_seconds: u32,
     pub default_kid: String,
 }
@@ -45,9 +47,15 @@ impl JwtManager {
             })
             .collect::<anyhow::Result<HashMap<String, JwtKey>>>()?;
 
+        let mut validation = Validation::new(Algorithm::RS256);
+        validation.set_audience(&[settings.audience.clone()]);
+        validation.set_issuer(&[settings.issuer.clone()]);
+
         Ok(JwtManager {
             keys: tmp_keys,
+            validation,
             issuer: settings.issuer.clone(),
+            audience: settings.audience.clone(),
             expire_seconds: settings.expire_seconds,
             default_kid,
         })

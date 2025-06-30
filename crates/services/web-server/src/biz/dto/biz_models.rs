@@ -2,8 +2,8 @@ use lib_macro_derive::BindCode;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 
-#[derive(Debug, Deserialize, BindCode)]
-pub enum AuthnTypeEnum {
+#[derive(Debug, Clone, Deserialize, BindCode)]
+pub enum AuthnMethodEnum {
     #[code(1)]
     SmsCode,
     #[code(2)]
@@ -18,15 +18,15 @@ pub enum AuthnTypeEnum {
     QrCode,
 }
 
-impl Display for AuthnTypeEnum {
+impl Display for AuthnMethodEnum {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            AuthnTypeEnum::SmsCode => write!(f, "sms-code"),
-            AuthnTypeEnum::Password => write!(f, "password"),
-            AuthnTypeEnum::OidcFacebook => write!(f, "oidc-facebook"),
-            AuthnTypeEnum::OidcGoogle => write!(f, "oidc-google"),
-            AuthnTypeEnum::OidcApple => write!(f, "oidc-apple"),
-            AuthnTypeEnum::QrCode => write!(f, "qr-code"),
+            AuthnMethodEnum::SmsCode => write!(f, "sms-code"),
+            AuthnMethodEnum::Password => write!(f, "password"),
+            AuthnMethodEnum::OidcFacebook => write!(f, "oidc-facebook"),
+            AuthnMethodEnum::OidcGoogle => write!(f, "oidc-google"),
+            AuthnMethodEnum::OidcApple => write!(f, "oidc-apple"),
+            AuthnMethodEnum::QrCode => write!(f, "qr-code"),
         }
     }
 }

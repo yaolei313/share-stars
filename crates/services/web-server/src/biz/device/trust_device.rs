@@ -1,4 +1,5 @@
-use crate::http::vo::DeviceInfo;
+use crate::biz::dto::AuthnMethodEnum;
+use crate::http::vo::{AppResult, DeviceInfo};
 
 /// 一、核心概念
 /// 设备指纹 (Device Fingerprinting): 通过收集浏览器和设备的各种可识别特征，组合成一个相对唯一的标识符。这些特征包括硬件信息、软件配置、网络环境等。
@@ -79,6 +80,10 @@ use crate::http::vo::DeviceInfo;
 // 对抗指纹伪造： 高级的攻击者可能尝试伪造指纹。系统需要不断更新指纹采集和识别算法，并结合行为分析（如登录地点、时间、频率）进行综合判断。
 // 定期更新： 浏览器更新、操作系统更新等都可能导致设备指纹变化，需要允许一定的容错性或定期要求用户重新验证可信设备。
 // 通过综合运用这些技术和策略，你可以建立一个较为完善的 Web 端可信设备检测和匹配系统，从而提升账户安全性并优化用户体验。
-pub fn is_trusted_device(user_id: i64, device: &DeviceInfo) -> bool {
-    return true;
+pub async fn check_trusted_device(
+    user_id: i64,
+    device: &DeviceInfo,
+    auth_type: AuthnMethodEnum,
+) -> AppResult<()> {
+    Ok(())
 }

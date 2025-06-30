@@ -1,30 +1,28 @@
 use crate::config::{AppSettings, AppState};
 use crate::http;
+use anyhow::Result;
 use axum::ServiceExt;
 use std::net::SocketAddr;
 use std::sync::Arc;
 
-pub mod common;
 mod handler;
 mod mw;
 mod router;
 pub mod vo;
 
-pub async fn serve(settings: Arc<AppSettings>) {
-    let state = AppState::from(settings.clone())
-        .await
-        .expect("invalid configuration");
+pub async fn serve(settings: Arc<AppSettings>) -> Result<()> {
+    let state = AppState::from(settings.clone()).await?;
 
     let app = router::init_router(state.clone());
+
     let address = settings.get_bind_addr();
-    let listener = tokio::net::TcpListener::bind(&address)
-        .await
-        .expect("bind address fail");
+    let listener = tokio::net::TcpListener::bind(&address).await?;
     tracing::debug!("listening on {}", &address);
+
     axum::serve(
         listener,
         app.into_make_service_with_connect_info::<SocketAddr>(),
     )
-    .await
-    .expect("error running HTTP server");
+    .await?;
+    Ok(())
 }

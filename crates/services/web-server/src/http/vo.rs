@@ -8,7 +8,6 @@ use axum::response::IntoResponse;
 use lib_macro_derive::BindCode;
 use serde::Serialize;
 use std::fmt::Display;
-use validator::ValidationErrors;
 
 pub type AppResult<T> = Result<T, AppError>;
 
@@ -39,25 +38,22 @@ where
     }
 }
 
-impl<T> RespVo<T>
+pub fn success_resp<T>(data: T) -> RespVo<T>
 where
     T: Serialize,
 {
-    pub fn success(data: T) -> Self {
-        let rsp: RespVo<T> = AppError::Success.into();
-        Self {
-            data: Some(data),
-            ..rsp
-        }
+    let rsp: RespVo<T> = AppError::Success.into();
+    RespVo {
+        data: Some(data),
+        ..rsp
     }
+}
 
-    pub fn fail(msg: String) -> Self {
-        AppError::Fail(msg).into()
-    }
-
-    pub fn invalid_argument(error: ValidationErrors) -> Self {
-        AppError::InvalidArgument(error.to_string()).into()
-    }
+pub fn success_resp_none_data<T>() -> RespVo<T>
+where
+    T: Serialize,
+{
+    AppError::Success.into()
 }
 
 #[derive(Debug, Serialize, BindCode)]

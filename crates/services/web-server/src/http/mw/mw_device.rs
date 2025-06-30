@@ -21,9 +21,10 @@ where
         let user_agent = get_header_value(&parts.headers, "user-agent");
         let request_id = get_header_value(&parts.headers, "x-request-id");
         let device_fp = get_header_value(&parts.headers, "app-device-fp");
+        let platform = PlatformEnum::Web; // TODO
 
         Ok(ExtractDeviceInfo(DeviceInfo {
-            platform: PlatformEnum::Web,
+            platform,
             ip,
             user_agent,
             device_fp,
