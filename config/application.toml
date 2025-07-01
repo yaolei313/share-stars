@@ -1,6 +1,6 @@
 [server]
-port = 8080
 host = "0.0.0.0"
+port = 8080
 worker_id = 1
 
 [database]
@@ -15,17 +15,6 @@ url = "redis://127.0.0.1:6379"
 issuer = "https://accounts.share-stars.com"
 audience = "https://www.share-stars.com/api"
 expire_seconds = 3600
-
-[[jwt.keys]]
-kid = "v1"
-private_key_path = "config/private_key1.pem"
-public_key_path = "config/public_key1.pem"
-
-
-[[jwt.keys]]
-kid = "v2"
-private_key_path = "config/private_key2.pem"
-public_key_path = "config/public_key2.pem"
 
 [sms]
 account_sid = ""

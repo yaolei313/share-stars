@@ -1,8 +1,8 @@
 use crate::biz::dto::AuthnMethodEnum;
 use crate::biz::session;
-use crate::config::AppState;
 use crate::http::vo::error::AppError;
 use crate::http::vo::AppResult;
+use crate::http::AppState;
 use axum::extract::{FromRequestParts, OptionalFromRequestParts, Request, State};
 use axum::http::header;
 use axum::http::request::Parts;

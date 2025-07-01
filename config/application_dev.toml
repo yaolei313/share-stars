@@ -1,0 +1,10 @@
+[[jwt.keys]]
+kid = "v1"
+private_key_path = "config/private_key1.pem"
+public_key_path = "config/public_key1.pem"
+
+
+[[jwt.keys]]
+kid = "v2"
+private_key_path = "config/private_key2.pem"
+public_key_path = "config/public_key2.pem"

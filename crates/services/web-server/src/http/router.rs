@@ -1,14 +1,14 @@
-use crate::config::AppState;
 use crate::http::handler::{
     login_by_password, login_by_sms, profile, profile_me, register_by_email, send_sms, test,
 };
 use crate::http::mw;
 use crate::http::vo::error::AppError;
+use crate::http::AppState;
 use axum::error_handling::HandleErrorLayer;
 use axum::http::{Method, StatusCode, Uri};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
-use axum::{BoxError, Router, middleware};
+use axum::{middleware, BoxError, Router};
 use std::time::Duration;
 use tower::ServiceBuilder;
 use tower_http::trace::TraceLayer;

@@ -2,10 +2,10 @@ use crate::biz::authn::base_login;
 use crate::biz::dto::AuthnMethodEnum;
 use crate::biz::security::{add_password_error_count, is_exceed_password_error_limit};
 use crate::biz::{device, security, session};
-use crate::config::AppState;
 use crate::http::vo::error::AppError;
 use crate::http::vo::login::LoginResult;
 use crate::http::vo::{AppResult, DeviceInfo};
+use crate::http::AppState;
 use axum_extra::handler::HandlerCallWithExtractors;
 use lib_core::db::models::{LoginPrincipal, Passport};
 use sha2::{Digest, Sha256};
@@ -22,6 +22,7 @@ where
     T: Fn(&Passport) -> AppResult<()>,
     P: Fn() -> AppResult<()>,
 {
+    log::info!("login by. {}", principal);
     let passport = state
         .service_state
         .passport_service
@@ -30,7 +31,7 @@ where
     let mut new_register = false;
     let user_id = match passport {
         Some(passport) => {
-            log::info!("login by {}", principal);
+            log::info!("passport status checking. {}", principal);
             let user_id = passport.user_id;
             // 1.校验状态
             check_passport_status(&passport)?;
@@ -44,7 +45,7 @@ where
             user_id
         }
         None => {
-            log::info!("register by {}", principal);
+            log::info!("registering. {}", principal);
             new_register = true;
 
             // 1.注册前校验
@@ -126,5 +127,6 @@ fn gen_token(
         expires_in: token.expires_in,
         refresh_token: token.refresh_token,
     };
+    log::info!("gen token finished. {}", user_id);
     Ok(result)
 }
