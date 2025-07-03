@@ -40,7 +40,7 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-static CONFIG_MAP: phf::Map<&'static str, &'static str> = phf_map! {
+static _CONFIG_MAP: phf::Map<&'static str, &'static str> = phf_map! {
     "app_name" => "My Awesome App",
     "version" => "1.0.0",
     "env" => "production",

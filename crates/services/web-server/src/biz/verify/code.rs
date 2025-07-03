@@ -1,6 +1,7 @@
 use crate::http::vo::AppResult;
 use crate::http::vo::error::AppError;
 use crate::http::vo::sms::SmsType;
+use lib_utils::rand_verify_code;
 use rand::prelude::*;
 use redis::{AsyncCommands, SetExpiry, SetOptions};
 use std::sync::Arc;
@@ -26,7 +27,7 @@ impl CodeManager {
 
     pub async fn gen_code(&self, e164_phone: &str, sms_type: &SmsType) -> AppResult<String> {
         // 避免
-        let val = rand_code();
+        let val = rand_verify_code();
 
         let mut conn = self.redis_client.get_multiplexed_async_connection().await?;
         //
@@ -93,9 +94,3 @@ const TEST_BIND_PHONE_CODE: &'static str = "151489";
 
 //测试手机号，短信验证码重置密码时使用固定的验证码
 const TEST_RESET_PWD_CODE: &'static str = "151490";
-
-fn rand_code() -> String {
-    let mut rng = rand::rng();
-    let random_number: u32 = rng.random_range(100_000..=999_999);
-    random_number.to_string()
-}

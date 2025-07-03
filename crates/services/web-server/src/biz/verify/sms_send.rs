@@ -1,5 +1,5 @@
 use crate::biz::verify::code::CodeManager;
-use crate::config::{AppState, Env, SmsSetting};
+use crate::config::{Env, SmsSetting};
 use crate::http::vo::AppResult;
 use crate::http::vo::sms::SmsType;
 use std::sync::Arc;

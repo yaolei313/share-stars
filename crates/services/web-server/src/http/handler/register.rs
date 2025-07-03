@@ -1,8 +1,8 @@
-use crate::http::vo::register::{RegisterByEmailReq, RegisterResult};
-use crate::http::vo::RespVo;
 use crate::http::AppState;
-use axum::extract::State;
+use crate::http::vo::RespVo;
+use crate::http::vo::register::{RegisterByEmailReq, RegisterResult};
 use axum::Json;
+use axum::extract::State;
 
 pub async fn register_by_email(
     State(state): State<AppState>,

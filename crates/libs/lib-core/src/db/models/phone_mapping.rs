@@ -6,3 +6,9 @@ pub struct PhoneMapping {
     pub phone: String,
     pub user_id: i64,
 }
+
+#[derive(Debug, FromRow)]
+pub struct NewPhoneMapping {
+    pub phone: String,
+    pub user_id: i64,
+}

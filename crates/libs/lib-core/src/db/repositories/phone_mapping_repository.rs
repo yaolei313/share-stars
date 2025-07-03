@@ -1,9 +1,8 @@
-use crate::db::models::PhoneMapping;
+use crate::db::models::{NewPhoneMapping, PhoneMapping};
 use std::fmt::Debug;
 
 pub trait PhoneMappingRepository: Send + Sync + Debug {
-    fn by_phone(
-        &self,
-        phone: &str,
-    ) -> impl Future<Output = Result<Option<PhoneMapping>, sqlx::Error>> + Send;
+    async fn by_phone(&self, phone: &str) -> Result<Option<PhoneMapping>, sqlx::Error>;
+
+    async fn insert(&self, mapping: NewPhoneMapping) -> Result<(), sqlx::Error>;
 }

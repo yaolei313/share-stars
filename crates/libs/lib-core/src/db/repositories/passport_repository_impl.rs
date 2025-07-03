@@ -1,7 +1,8 @@
-use crate::db::models::Passport;
+use crate::db::models::{NewPassport, Passport};
 use crate::db::repositories::PassportRepository;
-use sqlx::PgPool;
-use std::fmt::{Debug, Formatter};
+use sqlx::{Error, PgPool};
+use std::fmt::Debug;
+use tracing::log;
 
 #[derive(Debug)]
 pub struct PgPassportRepository {
@@ -24,5 +25,18 @@ impl PassportRepository for PgPassportRepository {
         .fetch_optional(&self.pool)
         .await?;
         Ok(passport)
+    }
+
+    async fn insert(&self, passport: NewPassport) -> Result<(), Error> {
+        let id = sqlx::query_as::<_, (i64,)>(r#"insert into passport (user_id, phone, email, created_at, updated_at) values ($1, $2, $3, $4, $5) returning id"#, )
+            .bind(passport.user_id)
+            .bind(passport.phone)
+            .bind(passport.email)
+            .bind(passport.created_at)
+            .bind(passport.updated_at)
+            .fetch_one(&self.pool)
+            .await?;
+        log::info!("inserted passport (id: {:?})", id);
+        Ok(())
     }
 }

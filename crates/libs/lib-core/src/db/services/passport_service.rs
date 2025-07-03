@@ -1,7 +1,8 @@
-use crate::db::models::{LoginPrincipal, OidcProviderEnum, Passport};
+use crate::db::models::{NewPassport, NewPhoneMapping, OidcProviderEnum, Passport, Principal};
 use crate::db::repositories::{
     PassportRepository, PgPassportRepository, PgPhoneMappingRepository, PhoneMappingRepository,
 };
+use chrono::Utc;
 use std::sync::Arc;
 
 pub struct PassportService {
@@ -22,14 +23,12 @@ impl PassportService {
 
     pub async fn query_passport(
         &self,
-        principal: &LoginPrincipal<'_>,
+        principal: &Principal<'_>,
     ) -> Result<Option<Passport>, sqlx::Error> {
         let user_id = match principal {
-            LoginPrincipal::Phone(phone) => self.by_phone(phone).await?,
-            LoginPrincipal::Email(email) => self.by_email(email).await?,
-            LoginPrincipal::OpenId { provider, open_id } => {
-                self.by_open_id(provider, open_id).await?
-            }
+            Principal::Phone(phone) => self.by_phone(phone).await?,
+            Principal::Email(email) => self.by_email(email).await?,
+            Principal::OpenId { provider, open_id } => self.by_open_id(provider, open_id).await?,
         };
 
         let passport = if let Some(user_id) = user_id {
@@ -43,9 +42,32 @@ impl PassportService {
 
     pub async fn create_passport(
         &self,
-        passport: &LoginPrincipal<'_>,
+        principal: &Principal<'_>,
         user_id: i64,
     ) -> Result<(), sqlx::Error> {
+        let now = Utc::now();
+        let mut passport = NewPassport {
+            user_id,
+            phone: "".to_string(),
+            email: "".to_string(),
+            created_at: now,
+            updated_at: now,
+        };
+        match principal {
+            Principal::Phone(phone) => passport.phone = phone.to_string(),
+            Principal::Email(email) => passport.email = email.to_string(),
+            _ => {}
+        }
+        self.passport_repo.insert(passport).await?;
+
+        match principal {
+            Principal::Phone(phone) => self.insert_phone(phone, user_id).await?,
+            Principal::Email(email) => self.insert_email(email, user_id).await?,
+            Principal::OpenId { provider, open_id } => {
+                self.insert_open_id(provider, open_id, user_id).await?
+            }
+        };
+
         Ok(())
     }
 
@@ -53,6 +75,15 @@ impl PassportService {
         let phone_mapping = self.phone_mapping_repo.by_phone(e164_phone).await?;
         let user_id = phone_mapping.map(|m| m.user_id);
         Ok(user_id)
+    }
+
+    async fn insert_phone(&self, phone: &str, user_id: i64) -> Result<(), sqlx::Error> {
+        let mapping = NewPhoneMapping {
+            phone: phone.to_string(),
+            user_id,
+        };
+        self.phone_mapping_repo.insert(mapping).await?;
+        Ok(())
     }
 
     async fn by_email(&self, email: &str) -> Result<Option<i64>, sqlx::Error> {

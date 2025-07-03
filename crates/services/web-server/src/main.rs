@@ -2,7 +2,7 @@ mod biz;
 mod config;
 mod http;
 
-use crate::config::{AppSettings, AppState};
+use crate::config::AppSettings;
 use anyhow::Result;
 use axum::{
     Form, Router,

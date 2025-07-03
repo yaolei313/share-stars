@@ -2,17 +2,17 @@ use crate::biz::authn::base_login;
 use crate::biz::dto::AuthnMethodEnum;
 use crate::biz::security::{add_password_error_count, is_exceed_password_error_limit};
 use crate::biz::{device, security, session};
+use crate::http::AppState;
 use crate::http::vo::error::AppError;
 use crate::http::vo::login::LoginResult;
 use crate::http::vo::{AppResult, DeviceInfo};
-use crate::http::AppState;
 use axum_extra::handler::HandlerCallWithExtractors;
-use lib_core::db::models::{LoginPrincipal, Passport};
+use lib_core::db::models::{Passport, Principal};
 use sha2::{Digest, Sha256};
 
 pub async fn common_login<T, P>(
     state: &AppState,
-    principal: &LoginPrincipal<'_>,
+    principal: &Principal<'_>,
     auth_type: AuthnMethodEnum,
     device_info: &DeviceInfo,
     validate_credentials: T,
@@ -60,7 +60,7 @@ where
                 .await?;
 
             // 3.保存设备
-            device::save_new_device(new_user_id, device_info, auth_type).await?;
+            device::save_new_device(new_user_id, device_info, &auth_type).await?;
 
             new_user_id
         }

@@ -14,3 +14,4 @@ regex.workspace = true
 dirs.workspace = true
 sonyflake.workspace = true
 rs-snowflake.workspace = true
+rand.workspace = true

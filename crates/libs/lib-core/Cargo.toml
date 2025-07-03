@@ -8,6 +8,7 @@ authors.workspace = true
 
 [dependencies]
 lib-macro-derive.workspace = true
+lib-utils.workspace = true
 anyhow.workspace = true
 axum.workspace = true
 axum-extra.workspace = true

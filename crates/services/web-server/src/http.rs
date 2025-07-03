@@ -1,9 +1,9 @@
 use crate::biz::ServiceState;
-use crate::config::{AppSettings, AppState, Env};
+use crate::config::{AppSettings, Env};
 use crate::http;
 use anyhow::{Context, Result};
-use axum::extract::FromRef;
 use axum::ServiceExt;
+use axum::extract::FromRef;
 use lib_core::RepositoryState;
 use sqlx::postgres::PgPoolOptions;
 use std::net::SocketAddr;
