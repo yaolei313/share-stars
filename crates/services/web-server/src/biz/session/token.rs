@@ -1,10 +1,9 @@
 use crate::biz::dto::{AuthnMethodEnum, TokenInfo};
-use crate::http::AppState;
 use crate::http::vo::error::AppError;
 use crate::http::vo::{AppResult, DeviceInfo};
-use axum::http::header;
+use crate::http::AppState;
 use chrono::Utc;
-use jsonwebtoken::{Algorithm, Header, Validation, decode, decode_header, encode};
+use jsonwebtoken::{decode, decode_header, encode, Algorithm, Header};
 use serde::{Deserialize, Serialize};
 
 pub fn create_token(

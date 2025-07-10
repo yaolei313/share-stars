@@ -29,7 +29,15 @@ async fn main() -> Result<()> {
         .open(file_path)?;
 
     let schema = "public";
-    let table = "passport";
+    let table = "user_credential";
+    let column_infos = meta.get_all_column_infos(schema, table).await?;
+    convert_schema_to_struct(&mut file, table, column_infos).expect("convert fail");
+
+    let table = "user_identity";
+    let column_infos = meta.get_all_column_infos(schema, table).await?;
+    convert_schema_to_struct(&mut file, table, column_infos).expect("convert fail");
+
+    let table = "user_identity_map";
     let column_infos = meta.get_all_column_infos(schema, table).await?;
     convert_schema_to_struct(&mut file, table, column_infos).expect("convert fail");
 

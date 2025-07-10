@@ -1,5 +1,5 @@
 use crate::http::vo::{DeviceInfo, PlatformEnum};
-use axum::extract::{ConnectInfo, FromRequest, FromRequestParts};
+use axum::extract::{ConnectInfo, FromRequestParts};
 use axum::http::request::Parts;
 use axum::http::{HeaderMap, HeaderValue};
 use axum::response::Response;
@@ -13,7 +13,7 @@ where
 {
     type Rejection = Response;
 
-    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
         let ip = get_ip_from_header(&parts.headers)
             .or_else(|| get_ip_from_connect_info(parts))
             .map(|ip| ip.to_string());

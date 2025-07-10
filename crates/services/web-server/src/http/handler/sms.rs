@@ -1,13 +1,12 @@
-use crate::biz::{security, verify};
-use crate::http::AppState;
-use crate::http::handler::sms;
+use crate::biz::security;
 use crate::http::mw::ExtractDeviceInfo;
 use crate::http::vo::error::AppError;
 use crate::http::vo::sms::{SmsSendReq, SmsSendResult, SmsType};
-use crate::http::vo::{AppResult, RespVo, success_resp_none_data};
-use axum::Json;
+use crate::http::vo::{success_resp_none_data, AppResult, RespVo};
+use crate::http::AppState;
 use axum::extract::State;
 use axum::response::IntoResponse;
+use axum::Json;
 use validator::Validate;
 
 #[axum::debug_handler]
@@ -21,7 +20,7 @@ pub async fn send_sms(
         return Err(AppError::InvalidArgument(err.to_string()));
     }
     let e164_phone = lib_utils::validate_then_format_phone_number(&payload.phone)
-        .map_err(|e| AppError::InvalidPhoneNumber(payload.phone.to_string()))?;
+        .map_err(|_e| AppError::InvalidPhoneNumber(payload.phone.to_string()))?;
     log::info!("send sms. {}", e164_phone);
 
     // 业务校验

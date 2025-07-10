@@ -18,3 +18,6 @@ pub struct TrustedDevice {
     pub expires_at: Option<chrono::DateTime<Utc>>,
     pub is_active: bool,
 }
+
+#[derive(Debug, FromRow)]
+pub struct Device {}

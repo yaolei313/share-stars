@@ -13,7 +13,7 @@ pub fn convert_schema_to_struct(
 ) -> anyhow::Result<()> {
     let mut header = String::new();
     let mut body = String::new();
-    header.push_str("use sqlx::FromRow;\n");
+    header.push_str("\nuse sqlx::FromRow;\n");
 
     body.push_str("\n#[derive(Debug, FromRow)]\n");
     body.push_str(&format!(

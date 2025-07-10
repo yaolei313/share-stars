@@ -1,8 +1,6 @@
-use crate::http::vo::AppResult;
 use crate::http::vo::error::AppError;
 use crate::http::vo::sms::SmsType;
-use lib_utils::rand_verify_code;
-use rand::prelude::*;
+use crate::http::vo::AppResult;
 use redis::{AsyncCommands, SetExpiry, SetOptions};
 use std::sync::Arc;
 
@@ -27,7 +25,7 @@ impl CodeManager {
 
     pub async fn gen_code(&self, e164_phone: &str, sms_type: &SmsType) -> AppResult<String> {
         // 避免
-        let val = rand_verify_code();
+        let val = lib_utils::rand_verify_code();
 
         let mut conn = self.redis_client.get_multiplexed_async_connection().await?;
         //

@@ -1,10 +1,7 @@
-mod passport;
-mod phone_mapping;
-mod trusted_device;
-
+mod account;
+mod device;
+pub use account::*;
 use lib_macro_derive::BindCode;
-pub use passport::*;
-pub use phone_mapping::*;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 
@@ -26,6 +23,24 @@ pub enum Principal<'a> {
         provider: OidcProviderEnum,
         open_id: &'a str,
     },
+}
+
+impl<'a> Principal<'a> {
+    pub fn provider(&self) -> i32 {
+        match self {
+            Principal::Phone(_) => 1,
+            Principal::Email(_) => 2,
+            Principal::OpenId { provider, .. } => provider.code(),
+        }
+    }
+
+    pub fn identity(&self) -> &str {
+        match self {
+            Principal::Phone(phone) => phone,
+            Principal::Email(email) => email,
+            Principal::OpenId { open_id, .. } => open_id,
+        }
+    }
 }
 
 pub enum Credential {

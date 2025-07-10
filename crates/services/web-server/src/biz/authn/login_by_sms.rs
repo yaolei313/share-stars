@@ -1,9 +1,9 @@
 use crate::biz::authn::base_login;
 use crate::biz::dto::AuthnMethodEnum;
-use crate::http::AppState;
 use crate::http::vo::login::LoginResult;
 use crate::http::vo::sms::SmsType;
 use crate::http::vo::{AppResult, DeviceInfo};
+use crate::http::AppState;
 use lib_core::db::models::Principal;
 
 pub async fn login_by_sms(
@@ -20,7 +20,7 @@ pub async fn login_by_sms(
         &Principal::Phone(e164_phone),
         AuthnMethodEnum::SmsCode,
         device_info,
-        |p| Ok(()),
+        |_| Ok(()),
         || Ok(()),
     )
     .await

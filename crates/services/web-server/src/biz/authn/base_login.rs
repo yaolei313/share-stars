@@ -1,13 +1,10 @@
-use crate::biz::authn::base_login;
 use crate::biz::dto::AuthnMethodEnum;
-use crate::biz::security::{add_password_error_count, is_exceed_password_error_limit};
 use crate::biz::{device, security, session};
-use crate::http::AppState;
 use crate::http::vo::error::AppError;
 use crate::http::vo::login::LoginResult;
 use crate::http::vo::{AppResult, DeviceInfo};
-use axum_extra::handler::HandlerCallWithExtractors;
-use lib_core::db::models::{Passport, Principal};
+use crate::http::AppState;
+use lib_core::db::models::{Account, Principal};
 use sha2::{Digest, Sha256};
 
 pub async fn common_login<T, P>(
@@ -15,29 +12,29 @@ pub async fn common_login<T, P>(
     principal: &Principal<'_>,
     auth_type: AuthnMethodEnum,
     device_info: &DeviceInfo,
-    validate_credentials: T,
+    validate_login: T,
     validate_register: P,
 ) -> AppResult<LoginResult>
 where
-    T: Fn(&Passport) -> AppResult<()>,
+    T: Fn(&Account) -> AppResult<()>,
     P: Fn() -> AppResult<()>,
 {
     log::info!("login by. {}", principal);
-    let passport = state
+    let account = state
         .service_state
-        .passport_service
-        .query_passport(principal)
+        .account_service
+        .query_by_principal(principal)
         .await?;
     let mut new_register = false;
-    let user_id = match passport {
-        Some(passport) => {
-            log::info!("passport status checking. {}", principal);
-            let user_id = passport.user_id;
+    let user_id = match account {
+        Some(account) => {
+            log::info!("account status checking. {}", principal);
+            let user_id = account.user_id;
             // 1.校验状态
-            check_passport_status(&passport)?;
+            check_status(&account)?;
 
             // 2.登陆前校验
-            validate_credentials(&passport)?;
+            validate_login(&account)?;
 
             // 3.可信设备校验
             device::check_trusted_device(user_id, device_info, auth_type).await?;
@@ -55,8 +52,8 @@ where
             // 2.注册
             state
                 .service_state
-                .passport_service
-                .create_passport(principal, new_user_id)
+                .account_service
+                .create_account(principal, new_user_id)
                 .await?;
 
             // 3.保存设备
@@ -76,23 +73,23 @@ where
     )
 }
 
-fn check_passport_status(passport: &Passport) -> AppResult<()> {
-    let user_id = passport.user_id;
-    if passport.disabled {
-        log::warn!("passport temporarily disabled. {}", user_id);
+fn check_status(account: &Account) -> AppResult<()> {
+    let user_id = account.user_id;
+    if account.disabled {
+        log::warn!("account temporarily disabled. {}", user_id);
         return Err(AppError::AccountTemporarilyDisabled);
     }
-    if passport.closed {
-        log::warn!("passport closed. {}", user_id);
+    if account.closed {
+        log::warn!("account closed. {}", user_id);
         return Err(AppError::AccountClosed);
     }
     Ok(())
 }
 
-pub(crate) fn check_password(passport: &Passport, input_password: &str) -> AppResult<()> {
-    let user_id = passport.user_id;
+pub(crate) fn check_password(account: &Account, input_password: &str) -> AppResult<()> {
+    let user_id = account.user_id;
     // 密码错误次数检查
-    if is_exceed_password_error_limit(user_id) {
+    if security::is_exceed_password_error_limit(user_id) {
         log::warn!("too many incorrect password attempts. {}", user_id);
         return Err(AppError::TooManyIncorrectPasswordAttempts);
     }
@@ -101,12 +98,12 @@ pub(crate) fn check_password(passport: &Passport, input_password: &str) -> AppRe
     let mut hasher = Sha256::new();
     // 将密码和盐值连接起来，然后进行散列
     hasher.update(input_password.as_bytes());
-    hasher.update(&passport.salt.as_bytes());
+    hasher.update(&account.salt.as_bytes());
     let input_password_sha256 = hex::encode(hasher.finalize());
 
-    if &input_password_sha256 != &passport.password_sha256 {
+    if &input_password_sha256 != &account.password_hash {
         log::warn!("password not matched. {}", user_id);
-        add_password_error_count(user_id);
+        security::add_password_error_count(user_id);
         return Err(AppError::InvalidUserOrPassword);
     }
 

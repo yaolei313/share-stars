@@ -3,7 +3,7 @@ use crate::biz::verify::{CodeManager, SmsService};
 use crate::config::{AppSettings, Env};
 use anyhow::Result;
 use lib_core::RepositoryState;
-use lib_core::db::services::PassportService;
+use lib_core::db::services::AccountService;
 use lib_utils::IdGenerator;
 use std::sync::Arc;
 
@@ -20,7 +20,7 @@ pub struct ServiceState {
     pub code_manager: Arc<CodeManager>,
     pub id_generator: Arc<IdGenerator>,
     pub sms_service: Arc<SmsService>,
-    pub passport_service: Arc<PassportService>,
+    pub account_service: Arc<AccountService>,
 }
 
 impl ServiceState {
@@ -38,16 +38,13 @@ impl ServiceState {
             code_manager.clone(),
             &config.sms,
         ));
-        let passport_service = Arc::new(PassportService::new(
-            repository_state.passport_repo.clone(),
-            repository_state.phone_mapping_repo.clone(),
-        ));
+        let passport_service = Arc::new(AccountService::new(repository_state));
         Ok(Self {
             jwt_manager,
             code_manager,
             id_generator,
             sms_service,
-            passport_service,
+            account_service: passport_service,
         })
     }
 }

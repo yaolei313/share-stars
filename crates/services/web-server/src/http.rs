@@ -1,8 +1,6 @@
 use crate::biz::ServiceState;
 use crate::config::{AppSettings, Env};
-use crate::http;
 use anyhow::{Context, Result};
-use axum::ServiceExt;
 use axum::extract::FromRef;
 use lib_core::RepositoryState;
 use sqlx::postgres::PgPoolOptions;

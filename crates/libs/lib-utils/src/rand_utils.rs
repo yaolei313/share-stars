@@ -1,3 +1,4 @@
+use rand::prelude::*;
 use rand::{Rng, RngCore};
 
 pub fn rand_verify_code() -> String {
