@@ -1,9 +1,9 @@
-use crate::db::models::{Account, AccountIdentity, LookupAccount, Principal};
+use crate::RepositoryState;
+use crate::db::models::{Account, AccountIdentity, LookupAccount};
 use crate::db::repositories::{
     AccountIdentityRepository, AccountRepository, LookupAccountRepository,
     PgAccountIdentityRepository, PgAccountRepository, PgLookupAccountRepository,
 };
-use crate::RepositoryState;
 use chrono::Utc;
 use sqlx::PgPool;
 use std::sync::Arc;
@@ -25,11 +25,12 @@ impl AccountService {
         }
     }
 
-    pub async fn query_by_principal(
+    pub async fn query_by_identity(
         &self,
-        principal: &Principal<'_>,
+        provider: i32,
+        identifier: &str,
     ) -> Result<Option<Account>, sqlx::Error> {
-        let user_id = self.lookup_user_id(principal).await?;
+        let user_id = self.lookup_user_id(provider, identifier).await?;
 
         let passport = if let Some(user_id) = user_id {
             self.account_repo.find_by_user_id(user_id).await?
@@ -42,12 +43,11 @@ impl AccountService {
 
     pub async fn create_account(
         &self,
-        principal: &Principal<'_>,
+        provider: i32,
+        identifier: &str,
         user_id: i64,
     ) -> Result<(), sqlx::Error> {
         let now = Utc::now();
-        let provider = principal.provider();
-        let identifier = principal.identity();
         let account = Account {
             id: 0,
             user_id,
@@ -93,10 +93,14 @@ impl AccountService {
         Ok(())
     }
 
-    async fn lookup_user_id(&self, principal: &Principal<'_>) -> Result<Option<i64>, sqlx::Error> {
+    async fn lookup_user_id(
+        &self,
+        provider: i32,
+        identifier: &str,
+    ) -> Result<Option<i64>, sqlx::Error> {
         let mapping = self
             .lookup_account_repo
-            .find_by_provider_identifier(principal.provider(), principal.identity())
+            .find_by_provider_identifier(provider, identifier)
             .await?;
         let user_id = mapping.map(|m| m.user_id);
         Ok(user_id)

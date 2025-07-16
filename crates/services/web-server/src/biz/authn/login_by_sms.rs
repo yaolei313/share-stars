@@ -1,10 +1,9 @@
 use crate::biz::authn::base_login;
-use crate::biz::dto::AuthnMethodEnum;
+use crate::biz::dto::{AuthnMethodEnum, Identity};
+use crate::http::AppState;
 use crate::http::vo::login::LoginResult;
 use crate::http::vo::sms::SmsType;
 use crate::http::vo::{AppResult, DeviceInfo};
-use crate::http::AppState;
-use lib_core::db::models::Principal;
 
 pub async fn login_by_sms(
     state: AppState,
@@ -15,13 +14,19 @@ pub async fn login_by_sms(
     // 1.校验验证码
     validate_sms_code(&state, e164_phone, sms_code).await?;
 
-    base_login::common_login(
+    let identity = Identity::PhoneNumber(e164_phone);
+    let account = base_login::query_then_check_status(&state, &identity).await?;
+    let user_id = match account {
+        Some(account) => account.user_id,
+        None => base_login::register(&state, &identity).await?,
+    };
+
+    base_login::do_login(
         &state,
-        &Principal::Phone(e164_phone),
-        AuthnMethodEnum::SmsCode,
+        user_id,
+        false,
+        &AuthnMethodEnum::Password,
         device_info,
-        |_| Ok(()),
-        || Ok(()),
     )
     .await
 }

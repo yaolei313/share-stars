@@ -1,12 +1,12 @@
 use crate::biz::security;
+use crate::http::AppState;
 use crate::http::mw::ExtractDeviceInfo;
 use crate::http::vo::error::AppError;
 use crate::http::vo::sms::{SmsSendReq, SmsSendResult, SmsType};
-use crate::http::vo::{success_resp_none_data, AppResult, RespVo};
-use crate::http::AppState;
+use crate::http::vo::{AppResult, RespVo, success_resp_none_data};
+use axum::Json;
 use axum::extract::State;
 use axum::response::IntoResponse;
-use axum::Json;
 use validator::Validate;
 
 #[axum::debug_handler]
@@ -22,14 +22,19 @@ pub async fn send_sms(
     let e164_phone = lib_utils::validate_then_format_phone_number(&payload.phone)
         .map_err(|_e| AppError::InvalidPhoneNumber(payload.phone.to_string()))?;
     log::info!("send sms. {}", e164_phone);
+    let sms_type = SmsType::Login;
 
     // 业务校验
-    security::check_send_sms_limit(&state, &e164_phone, &device_info).await?;
+    state
+        .service_state
+        .sms_statistic
+        .check_and_incr_send_sms_count(&e164_phone, &device_info, &sms_type)
+        .await?;
 
     state
         .service_state
         .sms_service
-        .send_verification_sms(&e164_phone, &SmsType::Login)
+        .send_verification_sms(&e164_phone, &sms_type)
         .await?;
 
     let rsp: RespVo<SmsSendResult> = success_resp_none_data();

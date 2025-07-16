@@ -1,6 +1,6 @@
+use crate::http::vo::AppResult;
 use crate::http::vo::error::AppError;
 use crate::http::vo::sms::SmsType;
-use crate::http::vo::AppResult;
 use redis::{AsyncCommands, SetExpiry, SetOptions};
 use std::sync::Arc;
 

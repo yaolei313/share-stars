@@ -9,3 +9,5 @@ pub use path_ext::*;
 pub use phone_ext::*;
 pub use rand_utils::*;
 pub use str_ext::*;
+
+pub const ONE_DAY_SECONDS: i64 = 24 * 60 * 60;

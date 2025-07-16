@@ -1,4 +1,5 @@
 use crate::biz::dto::AuthnMethodEnum;
+use crate::http::AppState;
 use crate::http::vo::{AppResult, DeviceInfo};
 
 /// 一、核心概念
@@ -81,9 +82,10 @@ use crate::http::vo::{AppResult, DeviceInfo};
 // 定期更新： 浏览器更新、操作系统更新等都可能导致设备指纹变化，需要允许一定的容错性或定期要求用户重新验证可信设备。
 // 通过综合运用这些技术和策略，你可以建立一个较为完善的 Web 端可信设备检测和匹配系统，从而提升账户安全性并优化用户体验。
 pub async fn check_trusted_device(
+    state: &AppState,
     user_id: i64,
     device: &DeviceInfo,
-    auth_type: AuthnMethodEnum,
+    auth_type: &AuthnMethodEnum,
 ) -> AppResult<()> {
     Ok(())
 }

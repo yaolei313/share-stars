@@ -1,8 +1,7 @@
 use crate::biz::dto::AuthnMethodEnum;
-use crate::biz::session;
-use crate::http::vo::error::AppError;
-use crate::http::vo::AppResult;
 use crate::http::AppState;
+use crate::http::vo::AppResult;
+use crate::http::vo::error::AppError;
 use axum::extract::{FromRequestParts, OptionalFromRequestParts, Request, State};
 use axum::http::header;
 use axum::http::request::Parts;
@@ -94,7 +93,7 @@ where
 // }
 
 pub fn validate_token(state: &AppState, token: &str) -> Option<CurrentUser> {
-    let Some(claim) = session::validate_token(state, token) else {
+    let Some(claim) = state.service_state.token_service.validate_token(token) else {
         return None;
     };
     let login_at: DateTime<Utc> = Utc

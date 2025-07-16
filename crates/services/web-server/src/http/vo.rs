@@ -10,6 +10,7 @@ use std::fmt::Display;
 
 pub type AppResult<T> = Result<T, AppError>;
 
+const SUCCESS: i32 = 0;
 #[derive(Debug, Serialize)]
 pub struct RespVo<T>
 where
@@ -25,10 +26,7 @@ where
     T: Serialize,
 {
     fn from(value: AppError) -> Self {
-        let message = match value {
-            AppError::Success => "success".to_owned(),
-            _ => format!("{}", value),
-        };
+        let message = format!("{}", value);
         RespVo {
             code: value.code(),
             message,
@@ -41,7 +39,7 @@ pub fn success_resp<T>(data: T) -> RespVo<T>
 where
     T: Serialize,
 {
-    let rsp: RespVo<T> = AppError::Success.into();
+    let rsp: RespVo<T> = success_resp_none_data();
     RespVo {
         data: Some(data),
         ..rsp
@@ -52,7 +50,11 @@ pub fn success_resp_none_data<T>() -> RespVo<T>
 where
     T: Serialize,
 {
-    AppError::Success.into()
+    RespVo {
+        code: SUCCESS,
+        message: "OK".to_string(),
+        data: None,
+    }
 }
 
 #[derive(Debug, Serialize, BindCode)]

@@ -9,10 +9,6 @@ use twilio::TwilioError;
 
 #[derive(Error, Debug, BindCode)]
 pub enum AppError {
-    #[code(0)]
-    #[error("success")]
-    Success,
-
     #[code(1)]
     #[error("fail:{0}")]
     Fail(String),
@@ -26,8 +22,8 @@ pub enum AppError {
     InvalidPhoneNumber(String),
 
     #[code(101)]
-    #[error("unregister phone number")]
-    UnregisterPhone,
+    #[error("unregister account")]
+    UnregisterAccount,
 
     #[code(102)]
     #[error("user may not exists or password error")]
@@ -60,6 +56,18 @@ pub enum AppError {
     #[code(109)]
     #[error("invalid sms code")]
     InvalidSmsCode,
+
+    #[code(110)]
+    #[error("please wait {0} seconds before requesting another code")]
+    SmsFrequencyExceed(i64),
+
+    #[code(111)]
+    #[error("sms quota exceeded")]
+    SmsPhoneDailyQuotaExceed,
+
+    #[code(112)]
+    #[error("sms quota exceeded")]
+    SmsDeviceDailyQuotaExceed,
 
     #[code(401)]
     #[error("authentication required")]
@@ -113,6 +121,7 @@ pub enum AppError {
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
+        log::error!("{:?}", self);
         let vo: RespVo<()> = RespVo::from(self);
         Json(vo).into_response()
     }
