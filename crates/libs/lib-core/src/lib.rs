@@ -1,5 +1,6 @@
 use crate::db::repositories::{
-    PgAccountIdentityRepository, PgAccountRepository, PgLookupAccountRepository,
+    PgAccountDeviceRepository, PgAccountIdentityRepository, PgAccountRepository,
+    PgDeviceRepository, PgLookupAccountRepository,
 };
 use sqlx::PgPool;
 use std::sync::Arc;
@@ -12,6 +13,8 @@ pub struct RepositoryState {
     pub account_repo: Arc<PgAccountRepository>,
     pub account_identity_repo: Arc<PgAccountIdentityRepository>,
     pub lookup_account_repo: Arc<PgLookupAccountRepository>,
+    pub device_repo: Arc<PgDeviceRepository>,
+    pub account_device_repo: Arc<PgAccountDeviceRepository>,
 }
 
 impl RepositoryState {
@@ -21,6 +24,8 @@ impl RepositoryState {
             account_repo: Arc::new(PgAccountRepository::new(db_pool.clone())),
             account_identity_repo: Arc::new(PgAccountIdentityRepository::new(db_pool.clone())),
             lookup_account_repo: Arc::new(PgLookupAccountRepository::new(db_pool.clone())),
+            device_repo: Arc::new(PgDeviceRepository::new(db_pool.clone())),
+            account_device_repo: Arc::new(PgAccountDeviceRepository::new(db_pool.clone())),
         }
     }
 }

@@ -11,7 +11,7 @@ pub trait AccountRepository: Send + Sync + Debug {
     fn insert<'c, E>(
         &self,
         executor: E,
-        account: Account,
+        account: &Account,
     ) -> impl Future<Output = SqlxResult<()>> + Send
     where
         E: PgExecutor<'c>;

@@ -1,5 +1,7 @@
 use anyhow::Result;
-use sqlx::{FromRow, PgPool, Pool, Postgres, Row};
+use sqlx::postgres::PgPoolOptions;
+use sqlx::{FromRow, Pool, Postgres, Row};
+use std::time::Duration;
 
 #[derive(Debug, FromRow)]
 pub struct TableInfo {
@@ -20,7 +22,10 @@ pub struct PgMeta {
 
 impl PgMeta {
     pub async fn new(database_url: &str) -> Result<PgMeta> {
-        let pool = PgPool::connect(&database_url).await?;
+        let pool = PgPoolOptions::new()
+            .acquire_timeout(Duration::from_secs(2))
+            .connect(database_url)
+            .await?;
         Ok(PgMeta { pool })
     }
 

@@ -1,16 +1,15 @@
-use crate::http::AppState;
-use crate::http::vo::AppResult;
 use crate::http::vo::error::AppError;
+use crate::http::vo::AppResult;
 use chrono::{Datelike, Utc};
 use lib_utils::ONE_DAY_SECONDS;
 use redis::AsyncTypedCommands;
 use std::sync::Arc;
 
-pub struct PasswordStatistic {
+pub struct PasswordStatisticService {
     redis_client: Arc<redis::Client>,
 }
 
-impl PasswordStatistic {
+impl PasswordStatisticService {
     pub fn new(redis_client: Arc<redis::Client>) -> Self {
         Self { redis_client }
     }
@@ -20,7 +19,7 @@ impl PasswordStatistic {
         let key = gen_key(user_id);
         let val = conn.get(key).await?;
         if let Some(val) = val {
-            let count = val.parse::<i32>().unwrap_or_else(|e| {
+            let count = val.parse::<i32>().unwrap_or_else(|_e| {
                 log::warn!("invalid val.{}", val);
                 0
             });

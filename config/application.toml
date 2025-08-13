@@ -11,9 +11,14 @@ idle_timeout_seconds = 30
 [redis]
 url = "redis://127.0.0.1:6379"
 
-[jwt]
+[login]
 issuer = "https://accounts.share-stars.com"
 audience = "https://www.share-stars.com/api"
+expire_seconds = 3600
+
+[mfa]
+issuer = "https://accounts.share-stars.com"
+audience = "https://www.share-stars.com/chanllege"
 expire_seconds = 3600
 
 [sms]

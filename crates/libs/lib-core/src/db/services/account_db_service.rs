@@ -1,26 +1,29 @@
-use crate::RepositoryState;
-use crate::db::models::{Account, AccountIdentity, LookupAccount};
+use crate::db::models::{Account, AccountDevice, AccountIdentity, LookupAccount};
 use crate::db::repositories::{
-    AccountIdentityRepository, AccountRepository, LookupAccountRepository,
-    PgAccountIdentityRepository, PgAccountRepository, PgLookupAccountRepository,
+    AccountDeviceRepository, AccountIdentityRepository, AccountRepository, LookupAccountRepository,
+    PgAccountDeviceRepository, PgAccountIdentityRepository, PgAccountRepository,
+    PgLookupAccountRepository,
 };
+use crate::RepositoryState;
 use chrono::Utc;
-use sqlx::PgPool;
+use sqlx::{PgPool, Result as SqlxResult};
 use std::sync::Arc;
 
-pub struct AccountService {
+pub struct AccountDbService {
     pg_pool: PgPool,
     account_repo: Arc<PgAccountRepository>,
     account_identity_repo: Arc<PgAccountIdentityRepository>,
+    account_device_repo: Arc<PgAccountDeviceRepository>,
     lookup_account_repo: Arc<PgLookupAccountRepository>,
 }
 
-impl AccountService {
+impl AccountDbService {
     pub fn new(repository_state: Arc<RepositoryState>) -> Self {
         Self {
             pg_pool: repository_state.pool.clone(),
             account_repo: repository_state.account_repo.clone(),
             account_identity_repo: repository_state.account_identity_repo.clone(),
+            account_device_repo: repository_state.account_device_repo.clone(),
             lookup_account_repo: repository_state.lookup_account_repo.clone(),
         }
     }
@@ -49,7 +52,6 @@ impl AccountService {
     ) -> Result<(), sqlx::Error> {
         let now = Utc::now();
         let account = Account {
-            id: 0,
             user_id,
             salt: "".to_string(),
             password_hash: "".to_string(),
@@ -73,9 +75,9 @@ impl AccountService {
 
         // sharding by user_id
         let mut tx = self.pg_pool.begin().await?;
-        self.account_repo.insert(&mut *tx, account).await?;
+        self.account_repo.insert(&mut *tx, &account).await?;
         self.account_identity_repo
-            .insert(&mut *tx, identity)
+            .insert(&mut *tx, &identity)
             .await?;
         tx.commit().await?;
 
@@ -87,7 +89,7 @@ impl AccountService {
         };
         // sharding by identifier
         self.lookup_account_repo
-            .insert(&self.pg_pool, lookup)
+            .insert(&self.pg_pool, &lookup)
             .await?;
 
         Ok(())
@@ -104,5 +106,19 @@ impl AccountService {
             .await?;
         let user_id = mapping.map(|m| m.user_id);
         Ok(user_id)
+    }
+
+    pub async fn query_account_device(
+        &self,
+        user_id: i64,
+        device_id: &str,
+    ) -> SqlxResult<Option<AccountDevice>> {
+        self.account_device_repo
+            .find_by_user_id_device_id(user_id, device_id)
+            .await
+    }
+
+    pub async fn add_account_device(&self, device: &AccountDevice) -> SqlxResult<()> {
+        self.account_device_repo.insert(&self.pg_pool, device).await
     }
 }

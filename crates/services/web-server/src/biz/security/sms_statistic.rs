@@ -1,7 +1,6 @@
-use crate::http::AppState;
 use crate::http::vo::error::AppError;
 use crate::http::vo::sms::SmsType;
-use crate::http::vo::{AppResult, DeviceInfo};
+use crate::http::vo::{AppResult, RequestInfo};
 use chrono::{Datelike, Utc};
 use redis::Script;
 use std::sync::Arc;
@@ -18,7 +17,7 @@ impl SmsStatistic {
     pub async fn check_and_incr_send_sms_count(
         &self,
         e164_phone: &str,
-        device_info: &DeviceInfo,
+        req_info: &RequestInfo,
         sms_type: &SmsType,
     ) -> AppResult<()> {
         let mut conn = self.redis_client.get_multiplexed_async_connection().await?;
@@ -27,11 +26,8 @@ impl SmsStatistic {
         // Prepare keys for MGET
         let cool_down_key = gen_cool_down_duration_key(e164_phone, sms_type);
         let phone_daily_count_key = gen_today_phone_send_count_key(e164_phone, day_of_month);
-        let device_daily_count_key = device_info
-            .device_fp
-            .as_ref()
-            .map(|df| gen_today_device_send_count_key(df, day_of_month))
-            .unwrap_or_else(|| "".to_string());
+        let device_daily_count_key =
+            gen_today_device_send_count_key(&req_info.device_id, day_of_month);
         let keys = vec![
             &cool_down_key,
             &phone_daily_count_key,
@@ -112,11 +108,9 @@ if current_phone_count >= phone_daily_limit then
     return {2, current_phone_count, current_device_count}
 end
 
-if device_daily_count_key ~= '' then
-    current_device_count = tonumber(redis.call('GET', device_daily_count_key)) or 0
-    if current_device_count >= device_daily_limit then
-        return {3, current_phone_count, current_device_count}
-    end
+current_device_count = tonumber(redis.call('GET', device_daily_count_key)) or 0
+if current_device_count >= device_daily_limit then
+    return {3, current_phone_count, current_device_count}
 end
 
 current_phone_count = redis.call('INCR', phone_daily_count_key)
@@ -124,11 +118,9 @@ if current_phone_count == 1 then
     redis.call('EXPIRE', phone_daily_count_key, daily_count_expiry_seconds)
 end
 
-if device_daily_count_key ~= '' then
-    current_device_count = redis.call('INCR', device_daily_count_key)
-    if current_device_count == 1 then
-        redis.call('EXPIRE', device_daily_count_key, daily_count_expiry_seconds)
-    end
+current_device_count = redis.call('INCR', device_daily_count_key)
+if current_device_count == 1 then
+    redis.call('EXPIRE', device_daily_count_key, daily_count_expiry_seconds)
 end
 
 return {0, current_phone_count, current_device_count}

@@ -1,36 +1,94 @@
 use crate::biz::dto::AuthnMethodEnum;
-use crate::http::AppState;
-use crate::http::vo::{AppResult, DeviceInfo};
+use crate::biz::security::MultiFactorAuthService;
+use crate::http::vo::error::AppError;
+use crate::http::vo::{AppResult, RequestInfo};
+use chrono::Utc;
+use lib_core::db::models::AccountDevice;
+use lib_core::db::services::AccountDbService;
+use std::sync::Arc;
 
-/// 一、核心概念
-/// 设备指纹 (Device Fingerprinting): 通过收集浏览器和设备的各种可识别特征，组合成一个相对唯一的标识符。这些特征包括硬件信息、软件配置、网络环境等。
-/// 可信设备 (Trusted Device): 指经过用户明确授权或系统通过综合判断认为安全的设备。通常，在此设备上登录时可以跳过或简化额外的安全验证步骤。
-/// 非可信设备 (Untrusted Device): 指首次登录的设备、公共设备、或存在异常特征的设备。在此设备上登录时需要加强安全验证。
-/// 二、可信设备检测和匹配的策略
+pub struct AccountDeviceService {
+    account_db_service: Arc<AccountDbService>,
+    mfa_service: Arc<MultiFactorAuthService>,
+}
+
+impl AccountDeviceService {
+    pub fn new(
+        account_db_service: Arc<AccountDbService>,
+        mfa_service: Arc<MultiFactorAuthService>,
+    ) -> Self {
+        AccountDeviceService {
+            account_db_service: account_db_service.clone(),
+            mfa_service: mfa_service.clone(),
+        }
+    }
+
+    pub async fn check_trusted_device(
+        &self,
+        user_id: i64,
+        request_info: &RequestInfo,
+    ) -> AppResult<()> {
+        let account_device = self
+            .account_db_service
+            .query_account_device(user_id, &request_info.device_id)
+            .await?;
+        if !self.is_trusted(account_device) {
+            let challenge = self.mfa_service.generate_challenge().await?;
+            return Err(AppError::UpgradedMFA(challenge));
+        }
+        log::info!("login from trusted device: {}", &request_info.device_id);
+        Ok(())
+    }
+
+    pub async fn save_new_account_device(
+        &self,
+        user_id: i64,
+        device: &RequestInfo,
+        auth_method: &AuthnMethodEnum,
+    ) -> AppResult<()> {
+        let db_device = AccountDevice {
+            id: 0,
+            user_id,
+            device_id: device.device_id.clone(),
+            last_login_ip: device.ip,
+            last_login_method: auth_method.code(),
+            last_login_at: Default::default(),
+            nickname: None,
+            trusted_at: None,
+            expires_at: None,
+            created_at: Default::default(),
+            updated_at: Default::default(),
+        };
+        self.account_db_service
+            .add_account_device(&db_device)
+            .await?;
+        Ok(())
+    }
+
+    fn is_trusted(&self, device: Option<AccountDevice>) -> bool {
+        let Some(ref device) = device else {
+            return false;
+        };
+        let Some(ref trust_at) = device.trusted_at else {
+            return false;
+        };
+        let now = Utc::now();
+        if let Some(ref expired_at) = device.expires_at {
+            trust_at.timestamp() <= now.timestamp() && now.timestamp() < expired_at.timestamp()
+        } else {
+            trust_at.timestamp() <= now.timestamp()
+        }
+    }
+}
+
+// 一、核心概念
+// 设备指纹 (Device Fingerprinting): 通过收集浏览器和设备的各种可识别特征，组合成一个相对唯一的标识符。这些特征包括硬件信息、软件配置、网络环境等。
+// 可信设备 (Trusted Device): 指经过用户明确授权或系统通过综合判断认为安全的设备。通常，在此设备上登录时可以跳过或简化额外的安全验证步骤。
+// 非可信设备 (Untrusted Device): 指首次登录的设备、公共设备、或存在异常特征的设备。在此设备上登录时需要加强安全验证。
+// 二、可信设备检测和匹配的策略
 // 1. 初次标记为可信设备
 // 用户主动授权： 在用户首次成功登录后（尤其是完成 MFA 后），在页面上提供一个选项，如“记住此设备”、“设为可信设备”、“下次登录免验证”。用户勾选后，系统会将当前设备的指纹保存到其账户信息中。
 // 静默授权（低风险场景）： 对于低风险的操作，如果用户多次从同一设备成功登录，且没有异常行为，系统可以考虑在后台静默地将该设备标记为可信。
-// 2. 设备指纹的生成与存储
-// 前端采集： 通过 JavaScript 在浏览器端收集各种设备和浏览器特征（详见“三、设备指纹技术”）。
-// 后端生成/存储： 将前端采集到的原始特征发送到后端。后端可以：
-// 直接存储原始特征列表。
-// 将原始特征进行哈希处理生成一个唯一的指纹字符串，然后存储这个指纹。
-// 存储指纹时，通常会关联用户ID、设备类型、首次识别时间、最后登录时间等信息。
-// 3. 可信设备的匹配与判断
-// 当用户尝试登录时：
-//
-// 收集当前设备的指纹： 再次在前端收集当前设备的指纹，并发送到后端。
-// 与存储的指纹比对： 后端将当前设备的指纹与该用户账户下所有已标记为“可信”的设备指纹进行比对。
-// 匹配算法：
-// 精确匹配： 要求指纹完全一致。这种方法过于严格，因为即使是同一个设备，一些非核心特征（如 IP 地址、临时字体）也可能变化。
-// 模糊匹配/相似度计算： 更常用。通过比较两个指纹的相似度，允许一定程度的特征变化。可以为每个特征分配权重，计算加权相似度分数。例如，操作系统版本、浏览器类型、CPU 核心数等核心特征权重更高。
-// 基于规则的判断： 结合指纹相似度阈值和一些额外的规则。例如：
-// 如果指纹相似度高于 90%，且 IP 地址在常用范围内，则认为是可信设备。
-// 如果指纹相似度只有 70%，但同时伴随异地登录，则视为不可信。
-// 决策：
-// 高匹配度（可信）： 允许用户直接登录，或只要求密码验证（跳过 MFA）。
-// 低匹配度/无匹配（不可信）： 强制要求二次验证（短信、邮箱 OTP、Authenticator App 等）。
-// 可疑匹配（风险提示）： 即使通过了二次验证，也可能向用户发送“新设备登录通知”。
 // 4. 可信设备的管理
 // 用户界面： 提供一个用户友好的界面，让用户可以查看所有已标记为可信的设备列表，并可以随时撤销对某个设备的信任。
 // 过期策略： 可信设备通常会设置一个有效期（例如 30 天、90 天）。过期后，即使设备相同，也需要重新进行身份验证。
@@ -53,17 +111,13 @@ use crate::http::vo::{AppResult, DeviceInfo};
 // 音频指纹 (AudioContext Fingerprinting): 利用 Web Audio API 播放音频并分析音频渲染结果的微小差异。
 // WebRTC IP 地址泄露: WebRTC 可能会暴露用户的真实 IP 地址（包括内网 IP），这可以作为指纹的一部分，但由于隐私问题，浏览器正在加强对其的限制。
 // 时区和语言设置: Intl.DateTimeFormat().resolvedOptions().timeZone, navigator.language.
-// Do Not Track (DNT) 状态: navigator.doNotTrack.
+
 // 3. 网络和连接特征
 // IP 地址: 后端从 HTTP 请求头获取。
 // HTTP 请求头信息: 除了 User-Agent，还有 Accept-Language, Accept-Encoding, Connection 等。
 // 代理/VPN 检测: 虽然难以直接从前端判断，但结合 IP 地址和用户行为模式可以辅助判断。
 // 4. Cookie 和 Local Storage
 // 持久化 ID: 在首次登录时设置一个长期的 Cookie 或 Local Storage 项作为设备 ID。这是最直接也是最脆弱的方式，因为它容易被用户清除。通常与其他指纹技术结合使用。
-// 四、实现步骤（概括）
-// 前端开发：
-// 编写 JavaScript 代码，收集上述提到的各种设备和浏览器特征。
-// 将收集到的数据打包成 JSON 对象，通过 API 请求发送到后端。
 // 后端 API 开发：
 // 设备指纹接收接口： 接收前端发送的设备特征数据。
 // 指纹处理逻辑：
@@ -81,11 +135,3 @@ use crate::http::vo::{AppResult, DeviceInfo};
 // 对抗指纹伪造： 高级的攻击者可能尝试伪造指纹。系统需要不断更新指纹采集和识别算法，并结合行为分析（如登录地点、时间、频率）进行综合判断。
 // 定期更新： 浏览器更新、操作系统更新等都可能导致设备指纹变化，需要允许一定的容错性或定期要求用户重新验证可信设备。
 // 通过综合运用这些技术和策略，你可以建立一个较为完善的 Web 端可信设备检测和匹配系统，从而提升账户安全性并优化用户体验。
-pub async fn check_trusted_device(
-    state: &AppState,
-    user_id: i64,
-    device: &DeviceInfo,
-    auth_type: &AuthnMethodEnum,
-) -> AppResult<()> {
-    Ok(())
-}

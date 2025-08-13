@@ -12,7 +12,7 @@ pub trait LookupAccountRepository: Send + Sync + Debug {
     fn insert<'c, E>(
         &self,
         executor: E,
-        lookup: LookupAccount,
+        lookup: &LookupAccount,
     ) -> impl Future<Output = SqlxResult<()>> + Send
     where
         E: PgExecutor<'c>;

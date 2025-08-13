@@ -1,3 +1,4 @@
+use crate::http::vo::mfa::MfaVerificationChallenge;
 use crate::http::vo::RespVo;
 use axum::response::{IntoResponse, Response};
 use axum::{BoxError, Json};
@@ -13,61 +14,13 @@ pub enum AppError {
     #[error("fail:{0}")]
     Fail(String),
 
-    #[code(2)]
+    #[code(10)]
     #[error("invalid argument: {0}")]
     InvalidArgument(String),
 
-    #[code(100)]
-    #[error("invalid phone number: {0}")]
-    InvalidPhoneNumber(String),
-
-    #[code(101)]
-    #[error("unregister account")]
-    UnregisterAccount,
-
-    #[code(102)]
-    #[error("user may not exists or password error")]
-    InvalidUserOrPassword,
-
-    #[code(103)]
-    #[error("account has been temporarily disabled")]
-    AccountTemporarilyDisabled,
-
-    #[code(104)]
-    #[error("account has been closed")]
-    AccountClosed,
-
-    #[code(105)]
-    #[error("too many incorrect password attempts")]
-    TooManyIncorrectPasswordAttempts,
-
-    #[code(106)]
-    #[error("login attempt from an unrecognized device")]
-    Upgraded2FASms,
-
-    #[code(107)]
-    #[error("login attempt from an unrecognized device")]
-    Upgraded2FAHardToken,
-
-    #[code(108)]
-    #[error("login attempt from an unrecognized device")]
-    Upgraded2FAPushCode,
-
-    #[code(109)]
-    #[error("invalid sms code")]
-    InvalidSmsCode,
-
-    #[code(110)]
-    #[error("please wait {0} seconds before requesting another code")]
-    SmsFrequencyExceed(i64),
-
-    #[code(111)]
-    #[error("sms quota exceeded")]
-    SmsPhoneDailyQuotaExceed,
-
-    #[code(112)]
-    #[error("sms quota exceeded")]
-    SmsDeviceDailyQuotaExceed,
+    #[code(400)]
+    #[error("invalid request")]
+    InvalidRequest,
 
     #[code(401)]
     #[error("authentication required")]
@@ -86,7 +39,7 @@ pub enum AppError {
     InternalServerError(#[from] BoxError),
 
     #[code(503)]
-    #[error("service is overloaded, try again later")]
+    #[error("service unavailable, try again later")]
     ServiceUnavailable,
 
     // --below system error--
@@ -117,6 +70,55 @@ pub enum AppError {
     #[code(1006)]
     #[error("sonyflake error: {0}")]
     IdGeneratorError(#[from] sonyflake::Error),
+
+    // below is biz error
+    #[code(2000)]
+    #[error("invalid phone number: {0}")]
+    InvalidPhoneNumber(String),
+
+    #[code(2001)]
+    #[error("unregister account")]
+    UnregisterAccount,
+
+    #[code(2002)]
+    #[error("user may not exists or password error")]
+    InvalidUserOrPassword,
+
+    #[code(2003)]
+    #[error("account has been temporarily disabled")]
+    AccountTemporarilyDisabled,
+
+    #[code(2004)]
+    #[error("account has been closed")]
+    AccountClosed,
+
+    #[code(2005)]
+    #[error("too many incorrect password attempts")]
+    TooManyIncorrectPasswordAttempts,
+
+    #[code(2006)]
+    #[error("MFA verification required")]
+    UpgradedMFA(MfaVerificationChallenge),
+
+    #[code(2007)]
+    #[error("invalid mfa token")]
+    InvalidMfaToken,
+
+    #[code(2009)]
+    #[error("invalid sms code")]
+    InvalidSmsCode,
+
+    #[code(2010)]
+    #[error("please wait {0} seconds before requesting another code")]
+    SmsFrequencyExceed(i64),
+
+    #[code(2011)]
+    #[error("sms quota exceeded")]
+    SmsPhoneDailyQuotaExceed,
+
+    #[code(2012)]
+    #[error("sms quota exceeded")]
+    SmsDeviceDailyQuotaExceed,
 }
 
 impl IntoResponse for AppError {

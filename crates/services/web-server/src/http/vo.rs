@@ -1,5 +1,6 @@
 pub mod error;
 pub mod login;
+pub mod mfa;
 pub mod register;
 pub mod sms;
 
@@ -7,6 +8,7 @@ use crate::http::vo::error::AppError;
 use lib_macro_derive::BindCode;
 use serde::Serialize;
 use std::fmt::Display;
+use std::net::IpAddr;
 
 pub type AppResult<T> = Result<T, AppError>;
 
@@ -81,10 +83,9 @@ impl Display for PlatformEnum {
 }
 
 #[derive(Debug, Serialize)]
-pub struct DeviceInfo {
+pub struct RequestInfo {
     pub platform: PlatformEnum,
-    pub ip: Option<String>,
-    pub user_agent: Option<String>,
-    pub device_fp: Option<String>,
+    pub device_id: String,
+    pub ip: Option<IpAddr>,
     pub request_id: Option<String>,
 }

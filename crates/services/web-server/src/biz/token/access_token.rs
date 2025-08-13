@@ -1,10 +1,9 @@
 use crate::biz::dto::{AuthnMethodEnum, TokenInfo};
-use crate::biz::session::JwtManager;
-use crate::http::AppState;
+use crate::biz::token::JwtManager;
 use crate::http::vo::error::AppError;
-use crate::http::vo::{AppResult, DeviceInfo};
+use crate::http::vo::{AppResult, RequestInfo};
 use chrono::Utc;
-use jsonwebtoken::{Algorithm, Header, decode, decode_header, encode};
+use jsonwebtoken::{decode, decode_header, encode, Algorithm, Header};
 use serde::{Deserialize, Serialize};
 
 pub struct TokenService {
@@ -16,11 +15,11 @@ impl TokenService {
         Self { jwt_manager }
     }
 
-    pub fn create_token(
+    pub fn create_access_token(
         &self,
         user_id: i64,
         authn_method: &AuthnMethodEnum,
-        device_info: &DeviceInfo,
+        req_info: &RequestInfo,
     ) -> AppResult<TokenInfo> {
         let manager = &self.jwt_manager;
         let Some(key) = manager.get_default_jwt_key() else {
@@ -31,16 +30,8 @@ impl TokenService {
         let expires_in = manager.expire_seconds as i64;
         let iat = Utc::now().timestamp();
         let exp = iat + expires_in;
-        let dvf = format!(
-            "{}-{}",
-            &device_info.platform.code(),
-            &device_info
-                .device_fp
-                .as_ref()
-                .map(|s| s.as_str())
-                .unwrap_or("")
-        );
-        let claims = Claims {
+        let dvf = format!("{}-{}", &req_info.platform.code(), &req_info.device_id);
+        let claims = AccessTokenClaims {
             aud: manager.audience.clone(),
             exp,
             iat,
@@ -59,7 +50,7 @@ impl TokenService {
         })
     }
 
-    pub fn validate_token(&self, token: &str) -> Option<Claims> {
+    pub fn validate_access_token(&self, token: &str) -> Option<AccessTokenClaims> {
         let manager = &self.jwt_manager;
         let header = decode_header(token).ok()?;
         let Some(ref kid) = header.kid else {
@@ -70,7 +61,8 @@ impl TokenService {
             log::warn!("invalid token header kid. {} {}", token, kid);
             return None;
         };
-        let Ok(data) = decode::<Claims>(token, &key.decoding_key, &manager.validation) else {
+        let Ok(data) = decode::<AccessTokenClaims>(token, &key.decoding_key, &manager.validation)
+        else {
             log::warn!("invalid token kid. {} {}", token, kid);
             return None;
         };
@@ -80,7 +72,7 @@ impl TokenService {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Claims {
+pub struct AccessTokenClaims {
     pub aud: String, // Optional. Audience 令牌是发给谁
     pub exp: i64,    // Required. Expiration time (as UTC timestamp)
     pub iat: i64,    // Optional. Issued at (as UTC timestamp)

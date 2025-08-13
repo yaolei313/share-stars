@@ -1,23 +1,44 @@
+use chrono::DateTime;
 use chrono::Utc;
+use serde_json::Value;
 use sqlx::FromRow;
+use std::net::IpAddr;
 
 #[derive(Debug, FromRow)]
-pub struct TrustedDevice {
-    pub id: i64,
-    pub user_id: i64,
-    pub device_fp_hash: String,
-    pub device_name: Option<String>,
-    pub os_family: Option<String>,
-    pub os_version: Option<String>,
-    pub browser_family: Option<String>,
-    pub browser_version: Option<String>,
-    pub device_type: Option<String>,
-    pub last_login_ip: Option<std::net::IpAddr>,
-    pub last_login_at: chrono::DateTime<Utc>,
-    pub created_at: chrono::DateTime<Utc>,
-    pub expires_at: Option<chrono::DateTime<Utc>>,
-    pub is_active: bool,
+pub struct Device {
+    pub device_id: String,
+    pub full_fingerprint: Value,
+    pub platform_type: i32,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, FromRow)]
-pub struct Device {}
+pub struct LookupDevice {
+    pub stable_fingerprint_hash: String,
+    pub device_id: String,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, FromRow)]
+pub struct PrefilterDevice {
+    pub id: i64,
+    pub prefilter_hash: Option<String>,
+    pub device_model: String,
+    pub platform_name: String,
+    pub os_name: String,
+    pub screen_width: i32,
+    pub screen_height: i32,
+    pub device_memory_gb: i32,
+    pub cpu_cores: i32,
+    pub renderer_vendor: String,
+    pub renderer_model: String,
+    pub browser_major_version: Option<String>,
+    pub app_major_version: Option<String>,
+    pub timezone_id: Option<String>,
+    pub language_code: Option<String>,
+    pub ip_address_segment: Option<IpAddr>,
+    pub device_id: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}

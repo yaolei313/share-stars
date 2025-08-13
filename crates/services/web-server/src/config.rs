@@ -85,7 +85,8 @@ pub struct AppSettings {
     pub server: ServerSetting,
     pub database: DatabaseSetting,
     pub redis: RedisSetting,
-    pub jwt: JwtSetting,
+    pub login: JwtSetting,
+    pub mfa: JwtSetting,
     pub sms: SmsSetting,
 }
 

@@ -23,17 +23,17 @@ impl AccountRepository for PgAccountRepository {
             .await
     }
 
-    async fn insert<'c, E>(&self, executor: E, account: Account) -> SqlxResult<()>
+    async fn insert<'c, E>(&self, executor: E, account: &Account) -> SqlxResult<()>
     where
         E: PgExecutor<'c>,
     {
-        let id = sqlx::query_as::<_, (i64,)>(r#"insert into account (user_id, created_at, updated_at) values ($1, $2, $3) returning id"#, )
+        sqlx::query(r#"insert into account (user_id, created_at, updated_at) values ($1, $2, $3)"#)
             .bind(account.user_id)
             .bind(account.created_at)
             .bind(account.updated_at)
             .fetch_one(executor)
             .await?;
-        log::info!("inserted account (id: {:?})", id);
+        log::info!("inserted account. {:?}", account);
         Ok(())
     }
 }

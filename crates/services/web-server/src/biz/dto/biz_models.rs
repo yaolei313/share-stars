@@ -7,7 +7,7 @@ pub enum AuthnMethodEnum {
     #[code(1)]
     SmsCode,
     #[code(2)]
-    Password,
+    PhonePassword,
     #[code(3)]
     OidcFacebook,
     #[code(4)]
@@ -22,7 +22,7 @@ impl Display for AuthnMethodEnum {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             AuthnMethodEnum::SmsCode => write!(f, "sms-code"),
-            AuthnMethodEnum::Password => write!(f, "password"),
+            AuthnMethodEnum::PhonePassword => write!(f, "password"),
             AuthnMethodEnum::OidcFacebook => write!(f, "oidc-facebook"),
             AuthnMethodEnum::OidcGoogle => write!(f, "oidc-google"),
             AuthnMethodEnum::OidcApple => write!(f, "oidc-apple"),

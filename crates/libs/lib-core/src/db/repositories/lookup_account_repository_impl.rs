@@ -30,13 +30,13 @@ impl LookupAccountRepository for PgLookupAccountRepository {
         .await
     }
 
-    async fn insert<'c, E>(&self, executor: E, lookup: LookupAccount) -> SqlxResult<()>
+    async fn insert<'c, E>(&self, executor: E, lookup: &LookupAccount) -> SqlxResult<()>
     where
         E: PgExecutor<'c>,
     {
         let id = sqlx::query_as::<_, (i64,)>("insert into lookup_account (provider, identifier, user_id) values ($1, $2, $3) returning id")
             .bind(lookup.provider)
-            .bind(lookup.identifier)
+            .bind(&lookup.identifier)
             .bind(lookup.user_id)
             .fetch_one(executor)
             .await?;

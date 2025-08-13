@@ -19,12 +19,12 @@ axum = { version = "0.8.4", features = ["macros", "http2"] }
 axum-extra = { version = "0.10.1", features = ["typed-header"] }
 chrono = { version = "0.4.41", features = ["serde"] }
 dotenv = "0.15.0"
-features = "0.10.0"
+futures = "0.3.31"
 headers = "0.4.1"
 jsonwebtoken = "9.3.1"
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.140"
-sqlx = { version = "0.8.6", features = ["runtime-tokio", "postgres", "chrono"] }
+sqlx = { version = "0.8.6", features = ["runtime-tokio", "postgres", "chrono", "ipnet"] }
 tokio = { version = "1.45.1", features = ["full"] }
 tower = { version = "0.5.2", features = [
     "util",
@@ -55,3 +55,4 @@ twilio = { version = "1.1.0" }
 redis = { version = "0.32.2", features = ["tokio-comp"] }
 regex = "1"
 dirs = "6"
+base64 = "0.22.1"
