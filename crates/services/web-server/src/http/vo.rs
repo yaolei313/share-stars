@@ -1,16 +1,18 @@
 pub mod error;
 pub mod login;
+pub mod mfa;
 pub mod register;
 pub mod sms;
 
 use crate::http::vo::error::AppError;
-use axum::response::IntoResponse;
 use lib_macro_derive::BindCode;
 use serde::Serialize;
 use std::fmt::Display;
+use std::net::IpAddr;
 
 pub type AppResult<T> = Result<T, AppError>;
 
+const SUCCESS: i32 = 0;
 #[derive(Debug, Serialize)]
 pub struct RespVo<T>
 where
@@ -26,10 +28,7 @@ where
     T: Serialize,
 {
     fn from(value: AppError) -> Self {
-        let message = match value {
-            AppError::Success => "success".to_owned(),
-            _ => format!("{}", value),
-        };
+        let message = format!("{}", value);
         RespVo {
             code: value.code(),
             message,
@@ -42,7 +41,7 @@ pub fn success_resp<T>(data: T) -> RespVo<T>
 where
     T: Serialize,
 {
-    let rsp: RespVo<T> = AppError::Success.into();
+    let rsp: RespVo<T> = success_resp_none_data();
     RespVo {
         data: Some(data),
         ..rsp
@@ -53,7 +52,11 @@ pub fn success_resp_none_data<T>() -> RespVo<T>
 where
     T: Serialize,
 {
-    AppError::Success.into()
+    RespVo {
+        code: SUCCESS,
+        message: "OK".to_string(),
+        data: None,
+    }
 }
 
 #[derive(Debug, Serialize, BindCode)]
@@ -80,10 +83,9 @@ impl Display for PlatformEnum {
 }
 
 #[derive(Debug, Serialize)]
-pub struct DeviceInfo {
+pub struct RequestInfo {
     pub platform: PlatformEnum,
-    pub ip: Option<String>,
-    pub user_agent: Option<String>,
-    pub device_fp: Option<String>,
+    pub device_id: String,
+    pub ip: Option<IpAddr>,
     pub request_id: Option<String>,
 }

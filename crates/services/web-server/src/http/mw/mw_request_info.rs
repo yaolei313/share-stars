@@ -1,33 +1,32 @@
-use crate::http::vo::{DeviceInfo, PlatformEnum};
-use axum::extract::{ConnectInfo, FromRequest, FromRequestParts};
+use crate::http::vo::error::AppError;
+use crate::http::vo::{PlatformEnum, RequestInfo};
+use axum::extract::{ConnectInfo, FromRequestParts};
 use axum::http::request::Parts;
 use axum::http::{HeaderMap, HeaderValue};
-use axum::response::Response;
 use std::net::{IpAddr, SocketAddr};
 
-pub struct ExtractDeviceInfo(pub DeviceInfo);
+pub struct ExtractRequestInfo(pub RequestInfo);
 
-impl<S> FromRequestParts<S> for ExtractDeviceInfo
+impl<S> FromRequestParts<S> for ExtractRequestInfo
 where
     S: Send + Sync,
 {
-    type Rejection = Response;
+    type Rejection = AppError;
 
-    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
-        let ip = get_ip_from_header(&parts.headers)
-            .or_else(|| get_ip_from_connect_info(parts))
-            .map(|ip| ip.to_string());
+    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
+        let ip = get_ip_from_header(&parts.headers).or_else(|| get_ip_from_connect_info(parts));
 
-        let user_agent = get_header_value(&parts.headers, "user-agent");
         let request_id = get_header_value(&parts.headers, "x-request-id");
-        let device_fp = get_header_value(&parts.headers, "app-device-fp");
+        let Some(device_id) = get_header_value(&parts.headers, "x-device-id") else {
+            return Err(AppError::InvalidRequest);
+        };
+
         let platform = PlatformEnum::Web; // TODO
 
-        Ok(ExtractDeviceInfo(DeviceInfo {
+        Ok(ExtractRequestInfo(RequestInfo {
             platform,
+            device_id,
             ip,
-            user_agent,
-            device_fp,
             request_id,
         }))
     }

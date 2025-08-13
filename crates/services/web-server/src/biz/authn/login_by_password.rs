@@ -1,34 +1,29 @@
-use crate::biz::authn::base_login;
-use crate::biz::authn::base_login::common_login;
-use crate::biz::dto::AuthnMethodEnum;
-use crate::biz::security::{add_password_error_count, is_exceed_password_error_limit};
-use crate::config::AppState;
+use crate::biz::authn::LoginService;
+use crate::biz::dto::{AuthnMethodEnum, Identity};
 use crate::http::vo::error::AppError;
 use crate::http::vo::login::LoginResult;
-use crate::http::vo::{AppResult, DeviceInfo};
-use lib_core::db::models::{LoginPrincipal, PhoneMapping};
-use lib_core::db::repositories::{PassportRepository, PhoneMappingRepository};
-use sha2::{Digest, Sha256};
+use crate::http::vo::{AppResult, RequestInfo};
 
-pub async fn login_by_password(
-    state: AppState,
-    principal: &LoginPrincipal<'_>,
-    password: &str,
-    device_info: &DeviceInfo,
-) -> AppResult<LoginResult> {
-    common_login(
-        &state,
-        principal,
-        AuthnMethodEnum::Password,
-        device_info,
-        |p| {
-            // 1.校验密码和可信设备
-            base_login::check_password(p, password)
-        },
-        || {
-            log::warn!("no passport found. {}", principal);
-            Err(AppError::UnregisterPhone)
-        },
-    )
-    .await
+impl LoginService {
+    pub async fn login_by_password(
+        &self,
+        e164_phone: &str,
+        password: &str,
+        req_info: &RequestInfo,
+    ) -> AppResult<LoginResult> {
+        log::info!("login by. {}", e164_phone);
+        let identity = Identity::PhoneNumber(e164_phone);
+        let account = self.query_then_check_status(&identity).await?;
+        let Some(account) = account else {
+            return Err(AppError::UnregisterAccount);
+        };
+        self.check_password(password, &account).await?;
+        self.do_login(
+            account.user_id,
+            false,
+            &AuthnMethodEnum::PhonePassword,
+            req_info,
+        )
+        .await
+    }
 }

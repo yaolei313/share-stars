@@ -2,28 +2,11 @@ mod biz;
 mod config;
 mod http;
 
-use crate::config::{AppSettings, AppState};
+use crate::config::AppSettings;
 use anyhow::Result;
-use axum::{
-    Form, Router,
-    error_handling::HandleErrorLayer,
-    extract::{Json, Path, Query},
-    http::{
-        HeaderMap, HeaderName, HeaderValue, StatusCode,
-        header::{self, COOKIE},
-    },
-    response::IntoResponse,
-    routing::{get, post},
-};
-use headers::UserAgent;
-use serde::{Deserialize, Serialize};
-use sqlx::postgres::PgPoolOptions;
+use std::env;
 use std::fs::File;
 use std::sync::Arc;
-use std::{borrow::Borrow, collections::HashMap, env, time::Duration};
-use tower::Service;
-use tower::ServiceBuilder;
-use tower_http::{auth, timeout::TimeoutLayer, trace::TraceLayer};
 use tracing_subscriber::filter::LevelFilter;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;

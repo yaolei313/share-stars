@@ -14,7 +14,6 @@ axum.workspace = true
 axum-extra.workspace = true
 chrono.workspace = true
 dotenv.workspace = true
-features.workspace = true
 headers.workspace = true
 jsonwebtoken.workspace = true
 serde.workspace = true

@@ -34,6 +34,6 @@ fn main() -> anyhow::Result<()> {
     });
 
     let set: JwkSet = serde_json::from_value(jwks_json).expect("Failed HS256 check");
-
+    println!("{:?}", set);
     Ok(())
 }

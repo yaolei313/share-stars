@@ -1,4 +1,4 @@
-use crate::config::AppState;
+use crate::http::AppState;
 use crate::http::vo::RespVo;
 use crate::http::vo::register::{RegisterByEmailReq, RegisterResult};
 use axum::Json;
