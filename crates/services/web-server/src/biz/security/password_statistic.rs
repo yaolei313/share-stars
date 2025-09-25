@@ -1,17 +1,23 @@
+use crate::config::JwtSetting;
 use crate::http::vo::error::AppError;
 use crate::http::vo::AppResult;
 use chrono::{Datelike, Utc};
-use lib_utils::ONE_DAY_SECONDS;
+use lib_utils::{JwtDelegate, ONE_DAY_SECONDS};
 use redis::AsyncTypedCommands;
 use std::sync::Arc;
 
 pub struct PasswordStatisticService {
     redis_client: Arc<redis::Client>,
+    jwt_delegate: JwtDelegate,
 }
 
 impl PasswordStatisticService {
-    pub fn new(redis_client: Arc<redis::Client>) -> Self {
-        Self { redis_client }
+    pub fn new(redis_client: Arc<redis::Client>, settings: &JwtSetting) -> anyhow::Result<Self> {
+        let jwt_delegate = JwtDelegate::new(&settings.keys)?;
+        Ok(Self {
+            redis_client,
+            jwt_delegate,
+        })
     }
 
     pub async fn is_exceed_password_error_limit(&self, user_id: i64) -> AppResult<()> {

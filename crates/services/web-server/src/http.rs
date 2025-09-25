@@ -22,7 +22,7 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub async fn from(config: Arc<AppSettings>) -> Result<AppState> {
+    pub async fn new(config: Arc<AppSettings>) -> Result<AppState> {
         log::info!("creating app state");
         let db_pool = PgPoolOptions::new()
             // The default connection limit for a Postgres server is 100 connections, minus 3 for superusers.
@@ -37,7 +37,6 @@ impl AppState {
         let repository_state = Arc::new(RepositoryState::new(db_pool));
         let redis_client = Arc::new(redis::Client::open(config.redis.url.as_str())?);
         let service_state = Arc::new(ServiceState::new(
-            config.env.clone(),
             repository_state.clone(),
             redis_client.clone(),
             config.clone(),
@@ -53,7 +52,7 @@ impl AppState {
 }
 
 pub async fn serve(settings: Arc<AppSettings>) -> Result<()> {
-    let state = AppState::from(settings.clone()).await?;
+    let state = AppState::new(settings.clone()).await?;
     let app = router::init_router(state.clone());
 
     let address = settings.server.get_bind_addr();

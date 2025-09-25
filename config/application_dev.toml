@@ -3,7 +3,6 @@ kid = "v1"
 private_key_path = "config/private_key1.pem"
 public_key_path = "config/public_key1.pem"
 
-
 [[login.keys]]
 kid = "v2"
 private_key_path = "config/private_key2.pem"
@@ -14,8 +13,17 @@ kid = "mv1"
 private_key_path = "config/private_key3.pem"
 public_key_path = "config/public_key3.pem"
 
-
 [[mfa.keys]]
 kid = "mv2"
 private_key_path = "config/private_key4.pem"
 public_key_path = "config/public_key4.pem"
+
+[[device.keys]]
+kid = "dv1"
+private_key_path = "config/private_key5.pem"
+public_key_path = "config/public_key5.pem"
+
+[[device.keys]]
+kid = "dv2"
+private_key_path = "config/private_key6.pem"
+public_key_path = "config/public_key6.pem"

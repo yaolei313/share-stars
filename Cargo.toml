@@ -17,7 +17,7 @@ lib-macro-derive = { path = "crates/libs/lib-macro-derive", version = "0.0.0" }
 anyhow = "1.0.98"
 axum = { version = "0.8.4", features = ["macros", "http2"] }
 axum-extra = { version = "0.10.1", features = ["typed-header"] }
-chrono = { version = "0.4.41", features = ["serde"] }
+chrono = { version = "0.4", features = ["serde"] }
 dotenv = "0.15.0"
 futures = "0.3.31"
 headers = "0.4.1"

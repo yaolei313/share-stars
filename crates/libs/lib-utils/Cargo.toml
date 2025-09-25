@@ -15,3 +15,7 @@ dirs.workspace = true
 sonyflake.workspace = true
 rs-snowflake.workspace = true
 rand.workspace = true
+jsonwebtoken.workspace = true
+validator.workspace = true
+serde.workspace = true
+log.workspace = true

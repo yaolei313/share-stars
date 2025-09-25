@@ -6,14 +6,14 @@ pub struct LoginByPasswordReq {
     #[validate(length(
         min = 11,
         max = 15,
-        message = "phone must at least be 11 characters and at most 15"
+        message = "phone must be between 11 and 15 digits long."
     ))]
     pub phone: String,
 
     #[validate(length(
-        min = 6,
+        min = 8,
         max = 16,
-        message = "password must at least 6 characters and at most 16"
+        message = "password must be between 8 and 16 digits long."
     ))]
     pub password: String,
 }
@@ -22,6 +22,7 @@ pub struct LoginByPasswordReq {
 pub struct LoginBySmsReq {
     #[validate(length(min = 11, max = 15, message = "phone is required"))]
     pub phone: String,
+
     #[validate(length(min = 6, max = 6, message = "sms code is required"))]
     pub sms_code: String,
 }

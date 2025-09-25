@@ -17,8 +17,8 @@ impl SmsStatistic {
     pub async fn check_and_incr_send_sms_count(
         &self,
         e164_phone: &str,
-        req_info: &RequestInfo,
         sms_type: &SmsType,
+        req_info: &RequestInfo,
     ) -> AppResult<()> {
         let mut conn = self.redis_client.get_multiplexed_async_connection().await?;
         let day_of_month = Utc::now().naive_local().day();

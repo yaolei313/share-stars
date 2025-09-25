@@ -1,12 +1,33 @@
+use crate::http::mw::ExtractRequestInfo;
+use crate::http::vo::error::AppError;
 use crate::http::vo::login::LoginResult;
-use crate::http::vo::mfa::MfaChallengeResult;
-use crate::http::vo::{AppResult, RespVo};
+use crate::http::vo::mfa::{MfaChallengeReq, MfaVerifyReq};
+use crate::http::vo::{success_resp_none_data, AppResult, RespVo};
+use crate::http::AppState;
+use axum::extract::State;
 use axum::Json;
+use validator::Validate;
 
-pub async fn mfa_challenge() -> AppResult<Json<RespVo<MfaChallengeResult>>> {
-    todo!()
+pub async fn mfa_challenge(
+    State(state): State<AppState>,
+    ExtractRequestInfo(req_info): ExtractRequestInfo,
+    Json(payload): Json<MfaChallengeReq>,
+) -> AppResult<Json<RespVo<()>>> {
+    if let Err(e) = payload.validate() {
+        log::warn!("validation error: {}", e);
+        return Err(AppError::InvalidArgument(e.to_string()));
+    }
+    state
+        .service_state
+        .mfa_service
+        .send_challenge(&payload.mfa_session_id, payload.chosen_method)
+        .await
+        .map(|_| Json(success_resp_none_data()))
 }
 
-pub async fn mfa_verify() -> AppResult<Json<RespVo<LoginResult>>> {
+pub async fn mfa_verify(
+    State(state): State<AppState>,
+    Json(payload): Json<MfaVerifyReq>,
+) -> AppResult<Json<RespVo<LoginResult>>> {
     todo!()
 }

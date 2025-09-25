@@ -1,7 +1,7 @@
 use crate::biz::account::AccountDeviceService;
 use crate::biz::dto::{AuthnMethodEnum, Identity};
-use crate::biz::security::PasswordStatisticService;
-use crate::biz::token::TokenService;
+use crate::biz::security::{MultiFactorAuthService, PasswordStatisticService};
+use crate::biz::token::AccessTokenService;
 use crate::biz::verify::SmsService;
 use crate::http::vo::error::AppError;
 use crate::http::vo::login::LoginResult;
@@ -17,11 +17,12 @@ mod login_by_sms;
 
 pub struct LoginService {
     id_generator: Arc<IdGenerator>,
-    token_service: Arc<TokenService>,
+    token_service: Arc<AccessTokenService>,
     password_statistic_service: Arc<PasswordStatisticService>,
     account_db_service: Arc<AccountDbService>,
     account_device_service: Arc<AccountDeviceService>,
     sms_service: Arc<SmsService>,
+    mfa_service: Arc<MultiFactorAuthService>,
 }
 
 impl LoginService {
@@ -30,8 +31,9 @@ impl LoginService {
         account_db_service: Arc<AccountDbService>,
         password_statistic_service: Arc<PasswordStatisticService>,
         account_device_service: Arc<AccountDeviceService>,
-        token_service: Arc<TokenService>,
+        token_service: Arc<AccessTokenService>,
         sms_service: Arc<SmsService>,
+        mfa_service: Arc<MultiFactorAuthService>,
     ) -> Self {
         Self {
             id_generator,
@@ -40,6 +42,7 @@ impl LoginService {
             account_db_service,
             account_device_service,
             sms_service,
+            mfa_service,
         }
     }
 
@@ -99,10 +102,24 @@ impl LoginService {
             self.account_device_service
                 .save_new_account_device(user_id, req_info, authn_method)
                 .await?;
+            log::info!("new device.{} {}", user_id, &req_info.device_id);
         } else {
-            self.account_device_service
+            let trusted = self
+                .account_device_service
                 .check_trusted_device(user_id, req_info)
                 .await?;
+            if !trusted {
+                let challenge = self
+                    .mfa_service
+                    .generate_challenge(user_id, authn_method, req_info)
+                    .await?;
+                return Err(AppError::UpgradedMFA(challenge));
+            }
+            log::info!(
+                "login from trusted device. {} {}",
+                user_id,
+                &req_info.device_id
+            );
         }
 
         // 2.token生成

@@ -3,7 +3,7 @@ use sqlx::{PgExecutor, Result as SqlxResult};
 use std::fmt::Debug;
 
 pub trait AccountIdentityRepository: Send + Sync + Debug {
-    fn list_by_user_id(
+    fn find_by_user_id(
         &self,
         user_id: i64,
     ) -> impl Future<Output = SqlxResult<Vec<AccountIdentity>>> + Send;
@@ -13,6 +13,12 @@ pub trait AccountIdentityRepository: Send + Sync + Debug {
         user_id: i64,
         provider: i32,
     ) -> impl Future<Output = SqlxResult<Option<AccountIdentity>>> + Send;
+
+    fn find_by_user_id_providers(
+        &self,
+        user_id: i64,
+        providers: Vec<i32>,
+    ) -> impl Future<Output = SqlxResult<Vec<AccountIdentity>>> + Send;
 
     fn insert<'c, E>(
         &self,

@@ -1,12 +1,14 @@
+pub mod device;
 pub mod error;
 pub mod login;
 pub mod mfa;
 pub mod register;
 pub mod sms;
+pub mod validators;
 
 use crate::http::vo::error::AppError;
 use lib_macro_derive::BindCode;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 use std::net::IpAddr;
 
@@ -59,7 +61,7 @@ where
     }
 }
 
-#[derive(Debug, Serialize, BindCode)]
+#[derive(Debug, Serialize, Deserialize, Clone, BindCode)]
 pub enum PlatformEnum {
     #[code(1)]
     Web,
@@ -82,7 +84,7 @@ impl Display for PlatformEnum {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RequestInfo {
     pub platform: PlatformEnum,
     pub device_id: String,

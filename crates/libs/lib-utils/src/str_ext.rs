@@ -22,3 +22,11 @@ pub fn snake_to_camel_case(s: &str) -> String {
         Some(first_char) => first_char.to_ascii_lowercase().to_string() + chars.as_str(),
     }
 }
+
+pub fn mask_phone_number(s: &str) -> String {
+    todo!()
+}
+
+pub fn mask_email(s: &str) -> String {
+    todo!()
+}

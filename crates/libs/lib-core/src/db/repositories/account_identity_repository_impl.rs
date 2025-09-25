@@ -14,7 +14,7 @@ impl PgAccountIdentityRepository {
 }
 
 impl AccountIdentityRepository for PgAccountIdentityRepository {
-    async fn list_by_user_id(&self, user_id: i64) -> SqlxResult<Vec<AccountIdentity>> {
+    async fn find_by_user_id(&self, user_id: i64) -> SqlxResult<Vec<AccountIdentity>> {
         sqlx::query_as::<_, AccountIdentity>("select * from account_identity where user_id = $1")
             .bind(user_id)
             .fetch_all(&self.pool)
@@ -32,6 +32,20 @@ impl AccountIdentityRepository for PgAccountIdentityRepository {
         .bind(user_id)
         .bind(provider)
         .fetch_optional(&self.pool)
+        .await
+    }
+
+    async fn find_by_user_id_providers(
+        &self,
+        user_id: i64,
+        providers: Vec<i32>,
+    ) -> SqlxResult<Vec<AccountIdentity>> {
+        sqlx::query_as::<_, AccountIdentity>(
+            "select * from account_identity where user_id = $1 and provider = any($2)",
+        )
+        .bind(user_id)
+        .bind(providers)
+        .fetch_all(&self.pool)
         .await
     }
 

@@ -22,17 +22,11 @@ pub async fn send_sms(
     log::info!("send sms. {}", e164_phone);
     let sms_type = SmsType::Login;
 
-    // 业务校验
-    state
-        .service_state
-        .sms_statistic
-        .check_and_incr_send_sms_count(&e164_phone, &req_info, &sms_type)
-        .await?;
-
+    // 业务
     state
         .service_state
         .sms_service
-        .send_sms_code(&e164_phone, &sms_type)
+        .send_sms_code(&e164_phone, &sms_type, &req_info)
         .await?;
 
     let rsp: RespVo<SmsSendResult> = success_resp_none_data();

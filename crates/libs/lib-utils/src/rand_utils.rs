@@ -6,7 +6,7 @@ pub fn rand_verify_code() -> String {
     random_number.to_string()
 }
 
-pub fn rand_salt_hex_string() -> String {
+pub fn rand_hex_string() -> String {
     let mut rng = rand::rng();
     let mut data_u8 = [0u8; 8];
     rng.fill_bytes(&mut data_u8);

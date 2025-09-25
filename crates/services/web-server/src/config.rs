@@ -1,14 +1,19 @@
 use anyhow::Result;
 use config::{Config, File};
+use lib_utils::KeySetting;
 use serde::Deserialize;
 use std::env;
 use std::io::{Error, ErrorKind};
 use std::str::FromStr;
+use validator::Validate;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct ServerSetting {
+    #[validate(length(min = 1))]
     pub host: String,
+    #[validate(range(min = 1, max = 65535))]
     pub port: u16,
+    #[validate(range(min = 1, max = 1024))]
     pub worker_id: u16,
 }
 
@@ -18,37 +23,42 @@ impl ServerSetting {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct DatabaseSetting {
+    #[validate(length(min = 1))]
     pub database_url: String,
+    #[validate(range(min = 1, max = 500))]
     pub min_connections: u32,
+    #[validate(range(min = 1, max = 500))]
     pub max_connections: u32,
     pub idle_timeout_seconds: Option<u64>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct RedisSetting {
+    #[validate(length(min = 1))]
     pub url: String,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct KeySetting {
-    pub kid: String,
-    pub public_key_path: String,
-    pub private_key_path: String,
-}
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct JwtSetting {
+    #[validate(length(min = 1))]
+    #[validate(nested)]
     pub keys: Vec<KeySetting>,
+    #[validate(length(min = 1))]
     pub audience: String,
+    #[validate(length(min = 1))]
     pub issuer: String,
     pub expire_seconds: u32,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct SmsSetting {
+    #[validate(length(min = 1))]
     pub account_sid: String,
+    #[validate(length(min = 1))]
     pub auth_token: String,
+    #[validate(length(min = 11, max = 15))]
     pub from_phone: String,
     pub status_callback_url: String,
 }
@@ -79,14 +89,22 @@ impl FromStr for Env {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct AppSettings {
     pub env: Env,
+    #[validate(nested)]
     pub server: ServerSetting,
+    #[validate(nested)]
     pub database: DatabaseSetting,
+    #[validate(nested)]
     pub redis: RedisSetting,
+    #[validate(nested)]
     pub login: JwtSetting,
+    #[validate(nested)]
     pub mfa: JwtSetting,
+    #[validate(nested)]
+    pub device: JwtSetting,
+    #[validate(nested)]
     pub sms: SmsSetting,
 }
 
@@ -112,6 +130,7 @@ impl AppSettings {
             .set_default("env", run_mode)?
             .build()?;
         let app_settings: AppSettings = settings.try_deserialize()?;
+        app_settings.validate()?;
 
         Ok(app_settings)
     }

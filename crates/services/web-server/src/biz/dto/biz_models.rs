@@ -1,8 +1,12 @@
+use crate::http::vo::mfa::MfaInfo;
+use crate::http::vo::RequestInfo;
+use chrono::Utc;
+use lib_core::db::models::ProviderType;
 use lib_macro_derive::BindCode;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
-#[derive(Debug, Clone, Deserialize, BindCode)]
+#[derive(Debug, Clone, Serialize, Deserialize, BindCode)]
 pub enum AuthnMethodEnum {
     #[code(1)]
     SmsCode,
@@ -31,22 +35,21 @@ impl Display for AuthnMethodEnum {
     }
 }
 
-#[derive(Debug, Deserialize, BindCode)]
-pub enum ProviderTypeEnum {
-    #[code(1)]
-    Phone,
-    #[code(2)]
-    Email,
+#[derive(Debug, Deserialize)]
+pub enum OidcProvider {
+    Facebook,
+    Google,
+    Apple,
 }
 
-#[derive(Debug, Deserialize, BindCode)]
-pub enum OidcProviderEnum {
-    #[code(11)]
-    Facebook,
-    #[code(12)]
-    Google,
-    #[code(13)]
-    Apple,
+impl From<&OidcProvider> for ProviderType {
+    fn from(value: &OidcProvider) -> Self {
+        match value {
+            OidcProvider::Facebook => ProviderType::Facebook,
+            OidcProvider::Google => ProviderType::Google,
+            OidcProvider::Apple => ProviderType::Apple,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -64,7 +67,7 @@ pub enum Credential {
         password: String,
     },
     OpenIdConnect {
-        provider: OidcProviderEnum,
+        provider: OidcProvider,
         id_token: String,
     },
 }
@@ -73,18 +76,19 @@ pub enum Identity<'a> {
     PhoneNumber(&'a str),
     Email(&'a str),
     OpenId {
-        provider: OidcProviderEnum,
+        provider: OidcProvider,
         open_id: &'a str,
     },
 }
 
 impl Identity<'_> {
     pub fn provider(&self) -> i32 {
-        match self {
-            Identity::PhoneNumber(_) => 1,
-            Identity::Email(_) => 2,
-            Identity::OpenId { provider, .. } => provider.code(),
-        }
+        let provider_type = match self {
+            Identity::PhoneNumber(_) => ProviderType::PhoneNumber,
+            Identity::Email(_) => ProviderType::Email,
+            Identity::OpenId { provider, .. } => provider.into(),
+        };
+        provider_type.code()
     }
 
     pub fn identifier(&self) -> &str {
@@ -105,7 +109,7 @@ impl Display for Identity<'_> {
             Identity::PhoneNumber(phone_number) => write!(f, "{}", phone_number),
             Identity::Email(email) => write!(f, "{}", email),
             Identity::OpenId { provider, open_id } => {
-                write!(f, "{} {}", provider.code(), open_id)
+                write!(f, "{} {}", ProviderType::from(provider).code(), open_id)
             }
         }
     }
@@ -115,4 +119,13 @@ pub struct TokenInfo {
     pub access_token: String,
     pub expires_in: i64,
     pub refresh_token: Option<String>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct MfaSession {
+    pub user_id: i64,
+    pub mfa_infos: Vec<MfaInfo>,
+    pub create_time: chrono::DateTime<Utc>,
+    pub authn_method: AuthnMethodEnum,
+    pub req_info: RequestInfo,
 }

@@ -121,4 +121,14 @@ impl AccountDbService {
     pub async fn add_account_device(&self, device: &AccountDevice) -> SqlxResult<()> {
         self.account_device_repo.insert(&self.pg_pool, device).await
     }
+
+    pub async fn query_identities(
+        &self,
+        user_id: i64,
+        providers: Vec<i32>,
+    ) -> SqlxResult<Vec<AccountIdentity>> {
+        self.account_identity_repo
+            .find_by_user_id_providers(user_id, providers)
+            .await
+    }
 }
