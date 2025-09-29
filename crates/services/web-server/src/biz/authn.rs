@@ -1,5 +1,5 @@
 use crate::biz::account::AccountDeviceService;
-use crate::biz::dto::{AuthnMethodEnum, Identity};
+use crate::biz::dto::{AuthnMethod, Identity};
 use crate::biz::security::{MultiFactorAuthService, PasswordStatisticService};
 use crate::biz::token::AccessTokenService;
 use crate::biz::verify::SmsService;
@@ -94,7 +94,7 @@ impl LoginService {
         &self,
         user_id: i64,
         new_register: bool,
-        authn_method: &AuthnMethodEnum,
+        authn_method: AuthnMethod,
         req_info: &RequestInfo,
     ) -> AppResult<LoginResult> {
         // 1.保存设备或可信设备校验

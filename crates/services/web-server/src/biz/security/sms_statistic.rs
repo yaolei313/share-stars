@@ -17,7 +17,7 @@ impl SmsStatistic {
     pub async fn check_and_incr_send_sms_count(
         &self,
         e164_phone: &str,
-        sms_type: &SmsType,
+        sms_type: SmsType,
         req_info: &RequestInfo,
     ) -> AppResult<()> {
         let mut conn = self.redis_client.get_multiplexed_async_connection().await?;
@@ -69,7 +69,7 @@ impl SmsStatistic {
 }
 
 // 某段时间内(key的失效时间)内某种类型的短信只能发送一次
-fn gen_cool_down_duration_key(e164_phone: &str, sms_type: &SmsType) -> String {
+fn gen_cool_down_duration_key(e164_phone: &str, sms_type: SmsType) -> String {
     format!("{{int:sms}}-cool-down:{}.{}", e164_phone, sms_type.code())
 }
 

@@ -1,5 +1,5 @@
 use crate::biz::authn::LoginService;
-use crate::biz::dto::{AuthnMethodEnum, Identity};
+use crate::biz::dto::{AuthnMethod, Identity};
 use crate::http::vo::login::LoginResult;
 use crate::http::vo::sms::SmsType;
 use crate::http::vo::{AppResult, RequestInfo};
@@ -13,7 +13,7 @@ impl LoginService {
     ) -> AppResult<LoginResult> {
         // 1.校验验证码
         self.sms_service
-            .validate_sms_code(e164_phone, &SmsType::Login, sms_code)
+            .validate_sms_code(e164_phone, SmsType::Login, sms_code)
             .await?;
 
         let identity = Identity::PhoneNumber(e164_phone);
@@ -23,7 +23,7 @@ impl LoginService {
             None => self.register(&identity).await?,
         };
 
-        self.do_login(user_id, false, &AuthnMethodEnum::PhonePassword, req_info)
+        self.do_login(user_id, false, AuthnMethod::PhonePassword, req_info)
             .await
     }
 }

@@ -3,7 +3,7 @@ use crate::http::vo::AppResult;
 use redis::{AsyncCommands, SetExpiry, SetOptions};
 use std::sync::Arc;
 
-pub struct CodeManager {
+pub struct ValidateCodeGenerator {
     redis_client: Arc<redis::Client>,
 }
 
@@ -17,7 +17,7 @@ else
 end
 "#;
 
-impl CodeManager {
+impl ValidateCodeGenerator {
     pub fn new(redis_client: Arc<redis::Client>) -> Self {
         Self { redis_client }
     }

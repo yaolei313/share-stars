@@ -5,6 +5,7 @@ use crate::http::vo::*;
 use crate::http::AppState;
 use axum::extract::Json;
 use axum::extract::State;
+use std::borrow::Cow;
 use validator::Validate;
 
 ///
@@ -16,12 +17,12 @@ pub async fn login_by_password(
 ) -> AppResult<Json<RespVo<LoginResult>>> {
     // 校验参数
     if let Err(err) = payload.validate() {
-        log::warn!("validation error: {}", err);
-        return Err(AppError::InvalidArgument(err.to_string()));
+        log::warn!("login by password validate error: {}", err);
+        return Err(AppError::InvalidArgument(Cow::Owned(err.to_string())));
     }
 
     let e164_phone = lib_utils::validate_then_format_phone_number(&payload.phone)
-        .map_err(|_| AppError::InvalidPhoneNumber(payload.phone.to_string()))?;
+        .map_err(|_| AppError::InvalidPhoneNumber(payload.phone))?;
 
     state
         .service_state
@@ -38,11 +39,11 @@ pub async fn login_by_sms(
 ) -> AppResult<Json<RespVo<LoginResult>>> {
     // 校验参数
     if let Err(err) = payload.validate() {
-        return Err(AppError::InvalidArgument(err.to_string()));
+        return Err(AppError::InvalidArgument(Cow::Owned(err.to_string())));
     }
 
     let e164_phone = lib_utils::validate_then_format_phone_number(&payload.phone)
-        .map_err(|_e| AppError::InvalidPhoneNumber(payload.phone.to_string()))?;
+        .map_err(|_e| AppError::InvalidPhoneNumber(payload.phone))?;
     log::info!("login by sms. {}", e164_phone);
     state
         .service_state

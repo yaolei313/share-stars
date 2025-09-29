@@ -1,4 +1,4 @@
-use crate::biz::dto::AuthnMethodEnum;
+use crate::biz::dto::AuthnMethod;
 use crate::http::vo::{AppResult, RequestInfo};
 use chrono::Utc;
 use lib_core::db::models::AccountDevice;
@@ -32,7 +32,7 @@ impl AccountDeviceService {
         &self,
         user_id: i64,
         device: &RequestInfo,
-        auth_method: &AuthnMethodEnum,
+        auth_method: AuthnMethod,
     ) -> AppResult<()> {
         let db_device = AccountDevice {
             id: 0,

@@ -2,14 +2,14 @@ use super::validators::validate_mfa_challenge_chosen_method;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Deserialize, Serialize, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum MfaMethod {
     Totp, // Time-based One-time Password，Google Authenticator
-    Sms,
-    Email,
+    SmsCode,
+    EmailCode,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, PartialEq, Eq, Clone)]
 pub struct MfaInfo {
     pub method: MfaMethod,
     pub detail: String,

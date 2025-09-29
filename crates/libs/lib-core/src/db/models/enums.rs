@@ -1,7 +1,7 @@
 use lib_macro_derive::BindCode;
 use serde::Deserialize;
 
-#[derive(Debug, Deserialize, BindCode)]
+#[derive(Debug, Deserialize, BindCode, Copy, Clone)]
 pub enum ProviderType {
     #[code(1)]
     PhoneNumber,

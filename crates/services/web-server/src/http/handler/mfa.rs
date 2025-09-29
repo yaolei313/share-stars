@@ -6,6 +6,7 @@ use crate::http::vo::{success_resp_none_data, AppResult, RespVo};
 use crate::http::AppState;
 use axum::extract::State;
 use axum::Json;
+use std::borrow::Cow;
 use validator::Validate;
 
 pub async fn mfa_challenge(
@@ -15,12 +16,12 @@ pub async fn mfa_challenge(
 ) -> AppResult<Json<RespVo<()>>> {
     if let Err(e) = payload.validate() {
         log::warn!("validation error: {}", e);
-        return Err(AppError::InvalidArgument(e.to_string()));
+        return Err(AppError::InvalidArgument(Cow::Owned(e.to_string())));
     }
     state
         .service_state
         .mfa_service
-        .send_challenge(&payload.mfa_session_id, payload.chosen_method)
+        .send_challenge(&payload.mfa_session_id, payload.chosen_method, &req_info)
         .await
         .map(|_| Json(success_resp_none_data()))
 }

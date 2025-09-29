@@ -2,7 +2,7 @@ use lib_macro_derive::BindCode;
 use serde::{Deserialize, Serialize};
 use validator::{Validate, ValidationError};
 
-#[derive(Debug, Deserialize, Serialize, BindCode)]
+#[derive(Debug, Deserialize, Serialize, BindCode, Copy, Clone)]
 pub enum SmsType {
     #[code(1)]
     Login,
@@ -10,6 +10,8 @@ pub enum SmsType {
     BindPhone,
     #[code(3)]
     ResetPwd,
+    #[code(4)]
+    Mfa,
 }
 
 #[derive(Debug, Deserialize, Serialize, Validate)]

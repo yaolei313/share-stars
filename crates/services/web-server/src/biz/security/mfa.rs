@@ -1,5 +1,8 @@
-use crate::biz::dto::{AuthnMethodEnum, MfaSession};
+use crate::biz::dto::{AuthnMethod, MfaSession};
+use crate::biz::verify::SmsService;
+use crate::http::vo::error::AppError;
 use crate::http::vo::mfa::{MfaInfo, MfaMethod, MfaVerificationChallenge};
+use crate::http::vo::sms::SmsType;
 use crate::http::vo::{AppResult, RequestInfo};
 use chrono::Utc;
 use lib_core::db::models::ProviderType;
@@ -7,28 +10,32 @@ use lib_core::db::services::AccountDbService;
 use lib_utils::rand_hex_string;
 use redis::{AsyncCommands, SetExpiry, SetOptions};
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 use std::sync::Arc;
 
 pub struct MultiFactorAuthService {
     redis_client: Arc<redis::Client>,
     account_db_service: Arc<AccountDbService>,
+    sms_service: Arc<SmsService>,
 }
 
 impl MultiFactorAuthService {
     pub fn new(
         redis_client: Arc<redis::Client>,
         account_db_service: Arc<AccountDbService>,
+        sms_service: Arc<SmsService>,
     ) -> anyhow::Result<Self> {
         Ok(Self {
             redis_client,
             account_db_service,
+            sms_service,
         })
     }
 
     pub async fn generate_challenge(
         &self,
         user_id: i64,
-        authn_method: &AuthnMethodEnum,
+        authn_method: AuthnMethod,
         req_info: &RequestInfo,
     ) -> AppResult<MfaVerificationChallenge> {
         let mfa_infos = self.get_available_mfa_infos(user_id).await?;
@@ -49,10 +56,12 @@ impl MultiFactorAuthService {
             .set_options(&mfa_session_id, &mfa_session_json, options)
             .await?;
 
+        let masked_mfa_infos = mask(mfa_infos);
+
         let challenge = MfaVerificationChallenge {
             user_id,
             mfa_session_id,
-            mfa_infos,
+            mfa_infos: masked_mfa_infos,
         };
         Ok(challenge)
     }
@@ -61,8 +70,46 @@ impl MultiFactorAuthService {
         &self,
         session_id: &str,
         chosen_method: MfaMethod,
+        req_info: &RequestInfo,
     ) -> AppResult<()> {
-        todo!()
+        let mut conn = self.redis_client.get_multiplexed_async_connection().await?;
+        let val: Option<String> = conn.get(session_id).await?;
+        let Some(val) = val else {
+            return Err(AppError::InvalidArgument(Cow::Borrowed(
+                "invalid session_id",
+            )));
+        };
+        let session: MfaSession = serde_json::from_str(&val)
+            .map_err(|_| AppError::InvalidArgument(Cow::Borrowed("invalid session_id")))?;
+        if session.req_info.device_id != req_info.device_id {
+            return Err(AppError::InvalidArgument(Cow::Borrowed(
+                "invalid session_id",
+            )));
+        }
+
+        let detail: Option<&String> = session
+            .mfa_infos
+            .iter()
+            .find(|item| item.method == chosen_method)
+            .map(|item| &item.detail);
+        let Some(detail) = detail else {
+            return Err(AppError::InvalidArgument(Cow::Borrowed(
+                "invalid session_id not support method",
+            )));
+        };
+
+        match chosen_method {
+            MfaMethod::SmsCode => {
+                self.sms_service
+                    .send_sms_code(detail, SmsType::Mfa, req_info)
+                    .await?
+            }
+            MfaMethod::EmailCode => {
+                todo!()
+            }
+            _ => {}
+        };
+        Ok(())
     }
 
     async fn get_available_mfa_infos(&self, user_id: i64) -> AppResult<Vec<MfaInfo>> {
@@ -77,12 +124,12 @@ impl MultiFactorAuthService {
             .into_iter()
             .filter_map(|id| match ProviderType::from_code(id.provider) {
                 Some(ProviderType::PhoneNumber) => Some(MfaInfo {
-                    method: MfaMethod::Sms,
-                    detail: lib_utils::mask_phone_number(&id.identifier),
+                    method: MfaMethod::SmsCode,
+                    detail: id.identifier,
                 }),
                 Some(ProviderType::Email) => Some(MfaInfo {
-                    method: MfaMethod::Email,
-                    detail: lib_utils::mask_email(&id.identifier),
+                    method: MfaMethod::EmailCode,
+                    detail: id.identifier,
                 }),
                 _ => None,
             })
@@ -101,6 +148,22 @@ impl MultiFactorAuthService {
         // todo add db query
         Ok(false)
     }
+}
+
+fn mask(info: Vec<MfaInfo>) -> Vec<MfaInfo> {
+    info.into_iter()
+        .map(|i| match i.method {
+            MfaMethod::SmsCode => MfaInfo {
+                detail: lib_utils::mask_e164_phone_number(&i.detail),
+                ..i
+            },
+            MfaMethod::EmailCode => MfaInfo {
+                detail: lib_utils::mask_email(&i.detail),
+                ..i
+            },
+            _ => i,
+        })
+        .collect()
 }
 
 #[derive(Debug, Serialize, Deserialize)]

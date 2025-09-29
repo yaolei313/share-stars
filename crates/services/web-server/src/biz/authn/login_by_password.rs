@@ -1,5 +1,5 @@
 use crate::biz::authn::LoginService;
-use crate::biz::dto::{AuthnMethodEnum, Identity};
+use crate::biz::dto::{AuthnMethod, Identity};
 use crate::http::vo::error::AppError;
 use crate::http::vo::login::LoginResult;
 use crate::http::vo::{AppResult, RequestInfo};
@@ -18,12 +18,7 @@ impl LoginService {
             return Err(AppError::UnregisterAccount);
         };
         self.check_password(password, &account).await?;
-        self.do_login(
-            account.user_id,
-            false,
-            &AuthnMethodEnum::PhonePassword,
-            req_info,
-        )
-        .await
+        self.do_login(account.user_id, false, AuthnMethod::PhonePassword, req_info)
+            .await
     }
 }

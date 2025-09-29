@@ -1,5 +1,5 @@
 use crate::biz::security::SmsStatistic;
-use crate::biz::verify::code::CodeManager;
+use crate::biz::verify::validate_code::ValidateCodeGenerator;
 use crate::config::{Env, SmsSetting};
 use crate::http::vo::error::AppError;
 use crate::http::vo::sms::SmsType;
@@ -9,7 +9,7 @@ use twilio::OutboundMessage;
 
 pub struct SmsService {
     env: Env,
-    code_manager: Arc<CodeManager>,
+    code_manager: Arc<ValidateCodeGenerator>,
     sms_statistic: Arc<SmsStatistic>,
     twilio_client: twilio::Client,
     from: String,
@@ -19,7 +19,7 @@ pub struct SmsService {
 impl SmsService {
     pub fn new(
         env: Env,
-        code_manager: Arc<CodeManager>,
+        code_manager: Arc<ValidateCodeGenerator>,
         sms_statistic: Arc<SmsStatistic>,
         sms_setting: &SmsSetting,
     ) -> Self {
@@ -36,11 +36,11 @@ impl SmsService {
     pub async fn send_sms_code(
         &self,
         e164_phone: &str,
-        sms_type: &SmsType,
+        sms_type: SmsType,
         req_info: &RequestInfo,
     ) -> AppResult<()> {
         self.sms_statistic
-            .check_and_incr_send_sms_count(&e164_phone, &sms_type, &req_info)
+            .check_and_incr_send_sms_count(&e164_phone, sms_type, &req_info)
             .await?;
 
         let key = format!("str:sms-code:{}.{}", sms_type.code(), e164_phone);
@@ -66,7 +66,7 @@ impl SmsService {
     pub async fn validate_sms_code(
         &self,
         e164_phone: &str,
-        sms_type: &SmsType,
+        sms_type: SmsType,
         sms_code: &str,
     ) -> AppResult<()> {
         if lib_utils::is_test_phone_number(e164_phone) {
@@ -80,13 +80,14 @@ impl SmsService {
 
 async fn validate_test_code(
     _e164_phone: &str,
-    sms_type: &SmsType,
+    sms_type: SmsType,
     input_code: &str,
 ) -> AppResult<()> {
     let target_code = match sms_type {
         SmsType::Login => TEST_LOGIN_CODE,
         SmsType::BindPhone => TEST_BIND_PHONE_CODE,
         SmsType::ResetPwd => TEST_RESET_PWD_CODE,
+        SmsType::Mfa => TEST_MFA_CHALLENGE_CODE,
     };
     if target_code == input_code {
         Ok(())
@@ -103,3 +104,5 @@ const TEST_BIND_PHONE_CODE: &'static str = "151489";
 
 //测试手机号，短信验证码重置密码时使用固定的验证码
 const TEST_RESET_PWD_CODE: &'static str = "151490";
+
+const TEST_MFA_CHALLENGE_CODE: &'static str = "151491";

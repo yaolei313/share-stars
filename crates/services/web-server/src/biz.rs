@@ -3,7 +3,7 @@ use crate::biz::authn::LoginService;
 use crate::biz::device::DeviceService;
 use crate::biz::security::{MultiFactorAuthService, PasswordStatisticService, SmsStatistic};
 use crate::biz::token::AccessTokenService;
-use crate::biz::verify::{CodeManager, SmsService};
+use crate::biz::verify::{SmsService, ValidateCodeGenerator};
 use crate::config::AppSettings;
 use anyhow::Result;
 use lib_core::db::services::{AccountDbService, DeviceDbService};
@@ -23,7 +23,7 @@ pub mod verify;
 pub struct ServiceState {
     pub account_db_service: Arc<AccountDbService>,
     pub device_db_service: Arc<DeviceDbService>,
-    pub code_manager: Arc<CodeManager>,
+    pub code_manager: Arc<ValidateCodeGenerator>,
     pub id_generator: Arc<IdGenerator>,
     pub sms_service: Arc<SmsService>,
     pub token_service: Arc<AccessTokenService>,
@@ -39,7 +39,7 @@ impl ServiceState {
         redis_client: Arc<redis::Client>,
         config: Arc<AppSettings>,
     ) -> Result<Self> {
-        let code_manager = Arc::new(CodeManager::new(redis_client.clone()));
+        let code_manager = Arc::new(ValidateCodeGenerator::new(redis_client.clone()));
         let id_generator = Arc::new(IdGenerator::new(config.server.worker_id)?);
         let sms_statistic = Arc::new(SmsStatistic::new(redis_client.clone()));
         let sms_service = Arc::new(SmsService::new(
@@ -54,6 +54,7 @@ impl ServiceState {
         let mfa_service = Arc::new(MultiFactorAuthService::new(
             redis_client.clone(),
             account_db_service.clone(),
+            sms_service.clone(),
         )?);
         let device_service = Arc::new(DeviceService::new(&config.device)?);
         let password_statistic = Arc::new(PasswordStatisticService::new(

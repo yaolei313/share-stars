@@ -4,6 +4,7 @@ use axum::response::{IntoResponse, Response};
 use axum::{BoxError, Json};
 use lib_macro_derive::BindCode;
 use redis::RedisError;
+use std::borrow::Cow;
 use std::io;
 use thiserror::Error;
 use twilio::TwilioError;
@@ -12,11 +13,11 @@ use twilio::TwilioError;
 pub enum AppError {
     #[code(1)]
     #[error("fail:{0}")]
-    Fail(String),
+    Fail(Cow<'static, str>),
 
     #[code(10)]
     #[error("invalid argument: {0}")]
-    InvalidArgument(String),
+    InvalidArgument(Cow<'static, str>),
 
     #[code(400)]
     #[error("invalid request")]
@@ -57,7 +58,7 @@ pub enum AppError {
 
     #[code(1003)]
     #[error("invalid config: {0}")]
-    ComponentInvalidConfig(&'static str),
+    ComponentInvalidConfig(Cow<'static, str>),
 
     #[code(1004)]
     #[error("twilio error: {0}")]

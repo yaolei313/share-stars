@@ -3,8 +3,8 @@ use validator::ValidationError;
 
 pub fn validate_mfa_challenge_chosen_method(method: &MfaMethod) -> Result<(), ValidationError> {
     match method {
-        MfaMethod::Sms => Ok(()),
-        MfaMethod::Email => Ok(()),
+        MfaMethod::SmsCode => Ok(()),
+        MfaMethod::EmailCode => Ok(()),
         MfaMethod::Totp => Err(ValidationError::new("invalid challenge method")),
     }
 }

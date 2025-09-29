@@ -10,6 +10,18 @@ pub fn validate_then_format_phone_number(
     Ok(e164_phone)
 }
 
+pub fn mask_e164_phone_number(phone_number: &str) -> String {
+    let len = phone_number.len();
+    if len < 5 {
+        return phone_number.to_string();
+    }
+    if phone_number.starts_with("+") {
+        format!("+{}{}", "*".repeat(len - 5), &phone_number[len - 4..])
+    } else {
+        format!("+{}{}", "*".repeat(len - 4), &phone_number[len - 4..])
+    }
+}
+
 // const re = ;
 
 pub fn is_test_phone_number(phone_number: &str) -> bool {
@@ -26,7 +38,7 @@ fn get_test_phone_regex() -> &'static Regex {
 
 #[cfg(test)]
 mod tests {
-    use crate::is_test_phone_number;
+    use crate::{is_test_phone_number, mask_e164_phone_number};
 
     #[test]
     fn test1() {
@@ -35,5 +47,18 @@ mod tests {
 
         println!("'{}' 匹配吗？ {}", s1, is_test_phone_number(s1)); // true
         println!("'{}' 匹配吗？ {}", s2, is_test_phone_number(s2)); // false
+    }
+
+    #[test]
+    fn test2() {
+        let phone1 = "+8613800138000";
+        let phone2 = "+15551234";
+        let phone3 = "1234567"; // 不带 + 号
+        let phone4 = "+123"; // 短于 4 位数字
+
+        println!("{} -> {}", phone1, mask_e164_phone_number(phone1));
+        println!("{} -> {}", phone2, mask_e164_phone_number(phone2));
+        println!("{} -> {}", phone3, mask_e164_phone_number(phone3));
+        println!("{} -> {}", phone4, mask_e164_phone_number(phone4));
     }
 }

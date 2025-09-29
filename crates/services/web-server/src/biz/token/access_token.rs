@@ -1,4 +1,4 @@
-use crate::biz::dto::{AuthnMethodEnum, TokenInfo};
+use crate::biz::dto::{AuthnMethod, TokenInfo};
 use crate::config::JwtSetting;
 use crate::http::vo::{AppResult, RequestInfo};
 use chrono::Utc;
@@ -34,7 +34,7 @@ impl AccessTokenService {
     pub fn create_access_token(
         &self,
         user_id: i64,
-        authn_method: &AuthnMethodEnum,
+        authn_method: AuthnMethod,
         req_info: &RequestInfo,
     ) -> AppResult<TokenInfo> {
         let iat = Utc::now().timestamp();

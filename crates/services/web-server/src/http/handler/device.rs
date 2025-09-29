@@ -4,6 +4,7 @@ use crate::http::vo::{AppResult, RespVo};
 use crate::http::AppState;
 use axum::extract::State;
 use axum::Json;
+use std::borrow::Cow;
 use validator::Validate;
 
 pub async fn register_device(
@@ -13,7 +14,7 @@ pub async fn register_device(
     // 校验参数
     if let Err(err) = payload.validate() {
         log::warn!("validation error: {}", err);
-        return Err(AppError::InvalidArgument(err.to_string()));
+        return Err(AppError::InvalidArgument(Cow::Owned(err.to_string())));
     }
     todo!()
 }

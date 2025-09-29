@@ -6,8 +6,8 @@ use lib_macro_derive::BindCode;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
-#[derive(Debug, Clone, Serialize, Deserialize, BindCode)]
-pub enum AuthnMethodEnum {
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, BindCode)]
+pub enum AuthnMethod {
     #[code(1)]
     SmsCode,
     #[code(2)]
@@ -22,28 +22,28 @@ pub enum AuthnMethodEnum {
     QrCode,
 }
 
-impl Display for AuthnMethodEnum {
+impl Display for AuthnMethod {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            AuthnMethodEnum::SmsCode => write!(f, "sms-code"),
-            AuthnMethodEnum::PhonePassword => write!(f, "password"),
-            AuthnMethodEnum::OidcFacebook => write!(f, "oidc-facebook"),
-            AuthnMethodEnum::OidcGoogle => write!(f, "oidc-google"),
-            AuthnMethodEnum::OidcApple => write!(f, "oidc-apple"),
-            AuthnMethodEnum::QrCode => write!(f, "qr-code"),
+            AuthnMethod::SmsCode => write!(f, "sms-code"),
+            AuthnMethod::PhonePassword => write!(f, "password"),
+            AuthnMethod::OidcFacebook => write!(f, "oidc-facebook"),
+            AuthnMethod::OidcGoogle => write!(f, "oidc-google"),
+            AuthnMethod::OidcApple => write!(f, "oidc-apple"),
+            AuthnMethod::QrCode => write!(f, "qr-code"),
         }
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Copy, Clone)]
 pub enum OidcProvider {
     Facebook,
     Google,
     Apple,
 }
 
-impl From<&OidcProvider> for ProviderType {
-    fn from(value: &OidcProvider) -> Self {
+impl From<OidcProvider> for ProviderType {
+    fn from(value: OidcProvider) -> Self {
         match value {
             OidcProvider::Facebook => ProviderType::Facebook,
             OidcProvider::Google => ProviderType::Google,
@@ -86,7 +86,7 @@ impl Identity<'_> {
         let provider_type = match self {
             Identity::PhoneNumber(_) => ProviderType::PhoneNumber,
             Identity::Email(_) => ProviderType::Email,
-            Identity::OpenId { provider, .. } => provider.into(),
+            Identity::OpenId { provider, .. } => (*provider).into(),
         };
         provider_type.code()
     }
@@ -109,7 +109,7 @@ impl Display for Identity<'_> {
             Identity::PhoneNumber(phone_number) => write!(f, "{}", phone_number),
             Identity::Email(email) => write!(f, "{}", email),
             Identity::OpenId { provider, open_id } => {
-                write!(f, "{} {}", ProviderType::from(provider).code(), open_id)
+                write!(f, "{} {}", ProviderType::from(*provider).code(), open_id)
             }
         }
     }
@@ -126,6 +126,6 @@ pub struct MfaSession {
     pub user_id: i64,
     pub mfa_infos: Vec<MfaInfo>,
     pub create_time: chrono::DateTime<Utc>,
-    pub authn_method: AuthnMethodEnum,
+    pub authn_method: AuthnMethod,
     pub req_info: RequestInfo,
 }
