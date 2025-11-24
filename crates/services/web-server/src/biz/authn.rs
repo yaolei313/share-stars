@@ -1,8 +1,9 @@
 use crate::biz::account::AccountDeviceService;
+pub(crate) use crate::biz::authn::mfa::MultiFactorAuthService;
 use crate::biz::dto::{AuthnMethod, Identity};
-use crate::biz::security::{MultiFactorAuthService, PasswordStatisticService};
+use crate::biz::statistic::PasswordStatisticService;
 use crate::biz::token::AccessTokenService;
-use crate::biz::verify::SmsService;
+use crate::biz::verify::VerifyManager;
 use crate::http::vo::error::AppError;
 use crate::http::vo::login::LoginResult;
 use crate::http::vo::{AppResult, RequestInfo};
@@ -15,13 +16,15 @@ use std::sync::Arc;
 mod login_by_password;
 mod login_by_sms;
 
+mod mfa;
+
 pub struct LoginService {
     id_generator: Arc<IdGenerator>,
     token_service: Arc<AccessTokenService>,
     password_statistic_service: Arc<PasswordStatisticService>,
     account_db_service: Arc<AccountDbService>,
     account_device_service: Arc<AccountDeviceService>,
-    sms_service: Arc<SmsService>,
+    verify_manager: Arc<VerifyManager>,
     mfa_service: Arc<MultiFactorAuthService>,
 }
 
@@ -32,7 +35,7 @@ impl LoginService {
         password_statistic_service: Arc<PasswordStatisticService>,
         account_device_service: Arc<AccountDeviceService>,
         token_service: Arc<AccessTokenService>,
-        sms_service: Arc<SmsService>,
+        verify_manager: Arc<VerifyManager>,
         mfa_service: Arc<MultiFactorAuthService>,
     ) -> Self {
         Self {
@@ -41,7 +44,7 @@ impl LoginService {
             password_statistic_service,
             account_db_service,
             account_device_service,
-            sms_service,
+            verify_manager,
             mfa_service,
         }
     }
@@ -83,10 +86,12 @@ impl LoginService {
     }
 
     pub async fn register(&self, idt: &Identity<'_>) -> AppResult<i64> {
+        log::info!("Initiating new user registration. {}", idt);
         let new_user_id = self.id_generator.next_id()?;
         self.account_db_service
             .create_account(idt.provider(), idt.identifier(), new_user_id)
             .await?;
+        log::info!("User registration successful. {}", new_user_id);
         Ok(new_user_id)
     }
 

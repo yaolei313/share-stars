@@ -1,4 +1,4 @@
-use crate::http::vo::mfa::MfaInfo;
+use crate::http::vo::mfa::{MfaInfo, MfaMethod};
 use crate::http::vo::RequestInfo;
 use chrono::Utc;
 use lib_core::db::models::ProviderType;
@@ -109,7 +109,7 @@ impl Display for Identity<'_> {
             Identity::PhoneNumber(phone_number) => write!(f, "{}", phone_number),
             Identity::Email(email) => write!(f, "{}", email),
             Identity::OpenId { provider, open_id } => {
-                write!(f, "{} {}", ProviderType::from(*provider).code(), open_id)
+                write!(f, "{:?} {}", ProviderType::from(*provider), open_id)
             }
         }
     }
@@ -128,4 +128,5 @@ pub struct MfaSession {
     pub create_time: chrono::DateTime<Utc>,
     pub authn_method: AuthnMethod,
     pub req_info: RequestInfo,
+    pub chosen_method: Option<MfaMethod>,
 }

@@ -34,6 +34,8 @@ async fn main() -> Result<()> {
         "device",
         "lookup_device",
         "prefilter_device",
+        "sms_template",
+        "email_template",
     ];
     let mut futures = Vec::new();
     for table in tables {

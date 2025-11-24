@@ -37,3 +37,5 @@ twilio.workspace = true
 rand.workspace = true
 redis.workspace = true
 sonyflake.workspace = true
+strfmt.workspace = true
+tera.workspace = true

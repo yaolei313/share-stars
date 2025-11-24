@@ -1,18 +1,6 @@
-use lib_macro_derive::BindCode;
+use crate::biz::verify::VerifyScenario;
 use serde::{Deserialize, Serialize};
 use validator::{Validate, ValidationError};
-
-#[derive(Debug, Deserialize, Serialize, BindCode, Copy, Clone)]
-pub enum SmsType {
-    #[code(1)]
-    Login,
-    #[code(2)]
-    BindPhone,
-    #[code(3)]
-    ResetPwd,
-    #[code(4)]
-    Mfa,
-}
 
 #[derive(Debug, Deserialize, Serialize, Validate)]
 pub struct SmsSendReq {
@@ -31,7 +19,7 @@ pub struct SmsSendReq {
 pub struct SmsSendResult {}
 
 pub fn validate_sms_type(sms_type: i32) -> Result<(), validator::ValidationError> {
-    let Some(_) = SmsType::from_code(sms_type) else {
+    let Some(_) = VerifyScenario::from_code(sms_type) else {
         return Err(ValidationError::new("invalid sms_type"));
     };
     Ok(())

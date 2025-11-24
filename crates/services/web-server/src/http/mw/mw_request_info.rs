@@ -1,8 +1,9 @@
 use crate::http::vo::error::AppError;
-use crate::http::vo::{PlatformEnum, RequestInfo};
-use axum::extract::{ConnectInfo, FromRequestParts};
+use crate::http::vo::{NewDeviceRequestInfo, PlatformEnum, RequestInfo};
+use axum::extract::{ConnectInfo, FromRequestParts, OptionalFromRequestParts};
 use axum::http::request::Parts;
 use axum::http::{HeaderMap, HeaderValue};
+use std::borrow::Cow;
 use std::net::{IpAddr, SocketAddr};
 
 pub struct ExtractRequestInfo(pub RequestInfo);
@@ -18,7 +19,9 @@ where
 
         let request_id = get_header_value(&parts.headers, "x-request-id");
         let Some(device_id) = get_header_value(&parts.headers, "x-device-id") else {
-            return Err(AppError::InvalidRequest);
+            return Err(AppError::InvalidRequest(Cow::Borrowed(
+                "not found x-device-id",
+            )));
         };
 
         let platform = PlatformEnum::Web; // TODO
@@ -29,6 +32,22 @@ where
             ip,
             request_id,
         }))
+    }
+}
+
+pub struct ExtractNewDeviceRequestInfo(pub Option<NewDeviceRequestInfo>);
+
+impl<S> OptionalFromRequestParts<S> for ExtractNewDeviceRequestInfo
+where
+    S: Send + Sync,
+{
+    type Rejection = AppError;
+
+    async fn from_request_parts(
+        parts: &mut Parts,
+        state: &S,
+    ) -> Result<Option<Self>, Self::Rejection> {
+        todo!()
     }
 }
 

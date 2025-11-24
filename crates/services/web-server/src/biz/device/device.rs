@@ -1,4 +1,3 @@
-use crate::config::JwtSetting;
 use lib_utils::JwtDelegate;
 
 pub struct DeviceService {
@@ -6,8 +5,7 @@ pub struct DeviceService {
 }
 
 impl DeviceService {
-    pub fn new(device: &JwtSetting) -> anyhow::Result<Self> {
-        let jwt_delegate = JwtDelegate::new(&device.keys)?;
-        Ok(Self { jwt_delegate })
+    pub fn new() -> anyhow::Result<Self> {
+        todo!()
     }
 }

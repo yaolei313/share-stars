@@ -9,6 +9,7 @@ use axum::http::{Method, StatusCode, Uri};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
 use axum::{BoxError, Router};
+use std::borrow::Cow;
 use std::time::Duration;
 use tower::ServiceBuilder;
 use tower_http::trace::TraceLayer;
@@ -62,7 +63,7 @@ async fn handle_error(method: Method, uri: Uri, error: BoxError) -> Response {
         return AppError::ServiceUnavailable.into_response();
     }
 
-    AppError::InternalServerError(error).into_response()
+    AppError::InternalServerError(Cow::Owned(error.to_string())).into_response()
 }
 
 async fn route_not_found() -> impl IntoResponse {

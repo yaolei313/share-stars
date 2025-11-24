@@ -7,7 +7,6 @@ pub enum ProviderType {
     PhoneNumber,
     #[code(2)]
     Email,
-
     #[code(11)]
     Facebook,
     #[code(12)]

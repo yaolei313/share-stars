@@ -4,10 +4,12 @@ use crate::db::repositories::{
     PgAccountDeviceRepository, PgAccountIdentityRepository, PgAccountRepository,
     PgLookupAccountRepository,
 };
-use crate::RepositoryState;
+use crate::db::RepositoryState;
+use crate::db::SqlxResult;
 use chrono::Utc;
-use sqlx::{PgPool, Result as SqlxResult};
+use sqlx::PgPool;
 use std::sync::Arc;
+use tracing::log;
 
 pub struct AccountDbService {
     pg_pool: PgPool,
@@ -32,7 +34,7 @@ impl AccountDbService {
         &self,
         provider: i32,
         identifier: &str,
-    ) -> Result<Option<Account>, sqlx::Error> {
+    ) -> SqlxResult<Option<Account>> {
         let user_id = self.lookup_user_id(provider, identifier).await?;
 
         let passport = if let Some(user_id) = user_id {
@@ -49,7 +51,7 @@ impl AccountDbService {
         provider: i32,
         identifier: &str,
         user_id: i64,
-    ) -> Result<(), sqlx::Error> {
+    ) -> SqlxResult<()> {
         let now = Utc::now();
         let account = Account {
             user_id,
@@ -80,26 +82,24 @@ impl AccountDbService {
             .insert(&mut *tx, &identity)
             .await?;
         tx.commit().await?;
+        log::info!("Account inserted successful. {}", identity.id);
 
+        // sharding by identifier
         let lookup = LookupAccount {
             id: 0,
             identifier: identifier.to_string(),
             provider,
             user_id,
         };
-        // sharding by identifier
         self.lookup_account_repo
             .insert(&self.pg_pool, &lookup)
             .await?;
+        log::info!("Account-Lookup inserted successful. {}", identity.id);
 
         Ok(())
     }
 
-    async fn lookup_user_id(
-        &self,
-        provider: i32,
-        identifier: &str,
-    ) -> Result<Option<i64>, sqlx::Error> {
+    async fn lookup_user_id(&self, provider: i32, identifier: &str) -> SqlxResult<Option<i64>> {
         let mapping = self
             .lookup_account_repo
             .find_by_provider_identifier(provider, identifier)

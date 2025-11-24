@@ -63,7 +63,13 @@ pub struct SmsSetting {
     pub status_callback_url: String,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Deserialize, Validate, Clone)]
+pub struct EmailSettings {
+    #[validate(email)]
+    pub from_email: String,
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq, Copy)]
 pub enum Env {
     #[serde(rename = "dev")]
     DEV,
@@ -101,11 +107,9 @@ pub struct AppSettings {
     #[validate(nested)]
     pub login: JwtSetting,
     #[validate(nested)]
-    pub mfa: JwtSetting,
-    #[validate(nested)]
-    pub device: JwtSetting,
-    #[validate(nested)]
     pub sms: SmsSetting,
+    #[validate(nested)]
+    pub email: EmailSettings,
 }
 
 impl AppSettings {
@@ -118,7 +122,7 @@ impl AppSettings {
         let database_url = env::var("DATABASE_URL")?;
 
         let settings = Config::builder()
-            .add_source(File::with_name("config/application.toml"))
+            .add_source(File::with_name("config/application"))
             .add_source(File::with_name(&format!("config/application_{run_mode}")).required(false))
             .add_source(
                 config::Environment::with_prefix("APP")

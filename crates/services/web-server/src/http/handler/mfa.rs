@@ -28,7 +28,17 @@ pub async fn mfa_challenge(
 
 pub async fn mfa_verify(
     State(state): State<AppState>,
+    ExtractRequestInfo(req_info): ExtractRequestInfo,
     Json(payload): Json<MfaVerifyReq>,
 ) -> AppResult<Json<RespVo<LoginResult>>> {
+    if let Err(e) = payload.validate() {
+        log::warn!("invalid mfa verify request: {} {}", payload, e);
+        return Err(AppError::InvalidArgument(Cow::Owned(e.to_string())));
+    }
+    state
+        .service_state
+        .mfa_service
+        .verify_challenge(&payload.mfa_session_id, &payload.verify_code, &req_info)
+        .await?;
     todo!()
 }

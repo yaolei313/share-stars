@@ -1,7 +1,7 @@
 use crate::biz::authn::LoginService;
 use crate::biz::dto::{AuthnMethod, Identity};
+use crate::biz::verify::VerifyScenario;
 use crate::http::vo::login::LoginResult;
-use crate::http::vo::sms::SmsType;
 use crate::http::vo::{AppResult, RequestInfo};
 
 impl LoginService {
@@ -12,17 +12,19 @@ impl LoginService {
         req_info: &RequestInfo,
     ) -> AppResult<LoginResult> {
         // 1.校验验证码
-        self.sms_service
-            .validate_sms_code(e164_phone, SmsType::Login, sms_code)
+        self.verify_manager
+            .verify_sms_code(e164_phone, VerifyScenario::Login, sms_code, req_info)
             .await?;
+        log::info!("SMS verification passed for phone: {}", e164_phone);
 
+        // 2.查询信息
         let identity = Identity::PhoneNumber(e164_phone);
         let account = self.query_then_check_status(&identity).await?;
         let user_id = match account {
             Some(account) => account.user_id,
             None => self.register(&identity).await?,
         };
-
+        log::info!("Starting login process. {}", identity);
         self.do_login(user_id, false, AuthnMethod::PhonePassword, req_info)
             .await
     }

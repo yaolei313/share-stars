@@ -1,34 +1,33 @@
 use crate::biz::dto::{AuthnMethod, MfaSession};
-use crate::biz::verify::SmsService;
+use crate::biz::verify::{VerifyManager, VerifyScenario};
 use crate::http::vo::error::AppError;
 use crate::http::vo::mfa::{MfaInfo, MfaMethod, MfaVerificationChallenge};
-use crate::http::vo::sms::SmsType;
 use crate::http::vo::{AppResult, RequestInfo};
 use chrono::Utc;
 use lib_core::db::models::ProviderType;
 use lib_core::db::services::AccountDbService;
 use lib_utils::rand_hex_string;
+use redis::aio::MultiplexedConnection;
 use redis::{AsyncCommands, SetExpiry, SetOptions};
-use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::sync::Arc;
 
 pub struct MultiFactorAuthService {
     redis_client: Arc<redis::Client>,
     account_db_service: Arc<AccountDbService>,
-    sms_service: Arc<SmsService>,
+    verify_manager: Arc<VerifyManager>,
 }
 
 impl MultiFactorAuthService {
     pub fn new(
         redis_client: Arc<redis::Client>,
         account_db_service: Arc<AccountDbService>,
-        sms_service: Arc<SmsService>,
+        verify_manager: Arc<VerifyManager>,
     ) -> anyhow::Result<Self> {
         Ok(Self {
             redis_client,
             account_db_service,
-            sms_service,
+            verify_manager,
         })
     }
 
@@ -47,13 +46,11 @@ impl MultiFactorAuthService {
             create_time: Utc::now(),
             authn_method: authn_method.clone(),
             req_info: req_info.clone(),
+            chosen_method: None,
         };
-        let mfa_session_json = serde_json::to_string(&mfa_session).expect("Failed to serialize");
 
         let mut conn = self.redis_client.get_multiplexed_async_connection().await?;
-        let options = SetOptions::default().with_expiration(SetExpiry::EX(60 * 3));
-        let _: () = (&mut conn)
-            .set_options(&mfa_session_id, &mfa_session_json, options)
+        self.save_session(&mut conn, &mfa_session_id, &mfa_session)
             .await?;
 
         let masked_mfa_infos = mask(mfa_infos);
@@ -72,7 +69,101 @@ impl MultiFactorAuthService {
         chosen_method: MfaMethod,
         req_info: &RequestInfo,
     ) -> AppResult<()> {
+        // 1.query and validation
         let mut conn = self.redis_client.get_multiplexed_async_connection().await?;
+        let session: MfaSession = self
+            .get_session_and_validate(&mut conn, session_id, req_info)
+            .await?;
+
+        let Some(info) = session
+            .mfa_infos
+            .iter()
+            .find(|item| item.method == chosen_method)
+        else {
+            return Err(AppError::InvalidArgument(Cow::Borrowed(
+                "not supported challenge method",
+            )));
+        };
+
+        // 2.send
+        match info.method {
+            MfaMethod::SmsCode => {
+                self.verify_manager
+                    .send_sms_code(&info.detail, VerifyScenario::Mfa, req_info)
+                    .await?
+            }
+            MfaMethod::EmailCode => {
+                self.verify_manager
+                    .send_email_code(&info.detail, VerifyScenario::Mfa, req_info)
+                    .await?
+            }
+            _ => Err(AppError::InvalidArgument(Cow::Borrowed(
+                "invalid challenge method",
+            )))?,
+        };
+
+        // 3. update session status
+        let updated_session = MfaSession {
+            chosen_method: Some(chosen_method),
+            ..session
+        };
+        self.save_session(&mut conn, &session_id, &updated_session)
+            .await
+    }
+
+    pub async fn verify_challenge(
+        &self,
+        session_id: &str,
+        verify_code: &str,
+        req_info: &RequestInfo,
+    ) -> AppResult<()> {
+        let mut conn = self.redis_client.get_multiplexed_async_connection().await?;
+        let session: MfaSession = self
+            .get_session_and_validate(&mut conn, session_id, req_info)
+            .await?;
+
+        let Some(chosen_method) = session.chosen_method else {
+            return Err(AppError::InvalidArgument(Cow::Borrowed("invalid session")));
+        };
+        let Some(info) = session
+            .mfa_infos
+            .iter()
+            .find(|item| item.method == chosen_method)
+        else {
+            return Err(AppError::InvalidArgument(Cow::Borrowed("invalid method")));
+        };
+
+        match chosen_method {
+            MfaMethod::SmsCode => {
+                self.verify_manager
+                    .verify_sms_code(&info.detail, VerifyScenario::Mfa, verify_code, req_info)
+                    .await?
+            }
+            MfaMethod::EmailCode => {
+                self.verify_manager
+                    .verify_email_code(&info.detail, VerifyScenario::Mfa, verify_code, req_info)
+                    .await?
+            }
+            _ => {
+                // todo,增加Totp支持
+                Err(AppError::InvalidArgument(Cow::Borrowed(
+                    "invalid challenge method",
+                )))?
+            }
+        };
+
+        // 清理挑战
+        let _: () = conn.del(session_id).await?;
+
+        Ok(())
+    }
+
+    async fn get_session_and_validate(
+        &self,
+        conn: &mut MultiplexedConnection,
+        session_id: &str,
+        req_info: &RequestInfo,
+    ) -> AppResult<MfaSession> {
         let val: Option<String> = conn.get(session_id).await?;
         let Some(val) = val else {
             return Err(AppError::InvalidArgument(Cow::Borrowed(
@@ -86,29 +177,22 @@ impl MultiFactorAuthService {
                 "invalid session_id",
             )));
         }
+        Ok(session)
+    }
 
-        let detail: Option<&String> = session
-            .mfa_infos
-            .iter()
-            .find(|item| item.method == chosen_method)
-            .map(|item| &item.detail);
-        let Some(detail) = detail else {
-            return Err(AppError::InvalidArgument(Cow::Borrowed(
-                "invalid session_id not support method",
-            )));
-        };
-
-        match chosen_method {
-            MfaMethod::SmsCode => {
-                self.sms_service
-                    .send_sms_code(detail, SmsType::Mfa, req_info)
-                    .await?
-            }
-            MfaMethod::EmailCode => {
-                todo!()
-            }
-            _ => {}
-        };
+    async fn save_session(
+        &self,
+        conn: &mut MultiplexedConnection,
+        session_id: &str,
+        session: &MfaSession,
+    ) -> AppResult<()> {
+        let new_mfa_session_json = serde_json::to_string(session).map_err(|e| {
+            AppError::InternalServerError(Cow::Owned(format!("Failed to serialize session: {}", e)))
+        })?;
+        let options = SetOptions::default().with_expiration(SetExpiry::EX(60 * 3));
+        let _: () = conn
+            .set_options(session_id, &new_mfa_session_json, options)
+            .await?;
         Ok(())
     }
 
@@ -164,12 +248,4 @@ fn mask(info: Vec<MfaInfo>) -> Vec<MfaInfo> {
             _ => i,
         })
         .collect()
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct MfaSessionClaims {
-    pub sub: i64,           // Subject (user_id for pending MFA)
-    pub session_id: String, // 用于追踪 MFA 会话的 ID
-    pub exp: usize,
-    // 其他 MFA 会话特有的声明
 }

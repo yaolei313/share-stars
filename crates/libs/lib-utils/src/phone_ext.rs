@@ -31,9 +31,19 @@ pub fn is_test_phone_number(phone_number: &str) -> bool {
     re.is_match(phone_number)
 }
 
+pub fn is_test_email(email: &str) -> bool {
+    let re = get_email_regex();
+    re.is_match(email)
+}
+
 fn get_test_phone_regex() -> &'static Regex {
     static ITEM: OnceLock<Regex> = OnceLock::new();
     ITEM.get_or_init(|| Regex::new(r"^\+861221987\d{4}$").expect("invalid regex"))
+}
+
+fn get_email_regex() -> &'static Regex {
+    static EMAIL_ITEM: OnceLock<Regex> = OnceLock::new();
+    EMAIL_ITEM.get_or_init(|| Regex::new(r"^\w+@app\.yao\.com$").expect("invalid regex"))
 }
 
 #[cfg(test)]

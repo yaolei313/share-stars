@@ -1,7 +1,7 @@
 use crate::db::models::Device;
 use crate::db::repositories::{DeviceRepository, PgDeviceRepository};
-use crate::RepositoryState;
-use sqlx::Result as SqlxResult;
+use crate::db::RepositoryState;
+use crate::db::SqlxResult;
 use std::sync::Arc;
 
 pub struct DeviceDbService {
@@ -19,7 +19,7 @@ impl DeviceDbService {
         self.device_repo.find_by_device_id(device_id).await
     }
 
-    pub async fn save_device(&self, device: Device) {
+    pub async fn save_device(&self, _device: Device) {
         //self.device_repo.find_by_user_id_device_fingerprint();
         todo!()
     }

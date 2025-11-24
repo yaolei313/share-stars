@@ -91,3 +91,11 @@ pub struct RequestInfo {
     pub ip: Option<IpAddr>,
     pub request_id: Option<String>,
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct NewDeviceRequestInfo {
+    pub platform: PlatformEnum,
+    pub device_id: Option<String>,
+    pub ip: Option<IpAddr>,
+    pub request_id: Option<String>,
+}

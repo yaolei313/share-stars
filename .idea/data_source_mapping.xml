@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DataSourcePerFileMappings">
+    <file url="file://$PROJECT_DIR$/crates/libs/lib-core/src/db/repositories/sms_template_repository_impl.rs" value="43b675c7-b410-4da0-a3c1-812a49ad0236" />
+  </component>
+</project>
