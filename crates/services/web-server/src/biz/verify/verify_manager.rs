@@ -75,7 +75,7 @@ impl VerifyManager {
         req_info: &RequestInfo,
     ) -> AppResult<()> {
         if lib_utils::is_test_phone_number(e164_phone) {
-            log::debug!("Using test phone number. Skipping Redis verification.");
+            tracing::debug!("Using test phone number. Skipping Redis verification.");
             validate_test_code(scenario, code).await
         } else {
             let key = self.gen_key(e164_phone, scenario);

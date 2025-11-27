@@ -142,7 +142,7 @@ pub enum AppError {
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
-        log::error!("{:?}", self);
+        tracing::error!("{:?}", self);
         let vo: RespVo<()> = RespVo::from(self);
         Json(vo).into_response()
     }

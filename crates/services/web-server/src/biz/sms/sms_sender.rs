@@ -40,7 +40,7 @@ impl SmsSender {
             .await?;
 
         if Env::DEV == self.env || Env::TEST == self.env {
-            log::info!(
+            tracing::info!(
                 "offline env do not send verification sms. {} {}",
                 e164_phone,
                 message

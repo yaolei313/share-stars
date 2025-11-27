@@ -35,7 +35,7 @@ impl CodeManager {
 
     pub async fn validate_code(&self, key: &str, input_code: &str) -> AppResult<()> {
         if input_code.len() != 6 {
-            log::info!("invalid verification code length: {}", input_code);
+            tracing::info!("invalid verification code length: {}", input_code);
             return Err(AppError::InvalidSmsCode);
         }
 
@@ -51,7 +51,7 @@ impl CodeManager {
         if result == 1 {
             Ok(())
         } else {
-            log::warn!("invalid verification code: {}", input_code);
+            tracing::warn!("invalid verification code: {}", input_code);
             Err(AppError::InvalidSmsCode)
         }
     }

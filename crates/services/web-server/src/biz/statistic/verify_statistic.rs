@@ -34,7 +34,7 @@ impl VerifyStatistic {
             &id_daily_count_key,
             &device_daily_count_key,
         ];
-        log::info!("keys: {:?}", keys);
+        tracing::info!("keys: {:?}", keys);
 
         let script = Script::new(LUA_SCRIPT);
 
@@ -47,7 +47,7 @@ impl VerifyStatistic {
             .invoke_async(&mut conn)
             .await?;
 
-        log::info!(
+        tracing::info!(
             "status: {} {} {}",
             id_cooldown_status,
             id_daily_count,

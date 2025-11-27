@@ -15,7 +15,7 @@ impl LoginService {
         self.verify_manager
             .verify_sms_code(e164_phone, VerifyScenario::Login, sms_code, req_info)
             .await?;
-        log::info!("SMS verification passed for phone: {}", e164_phone);
+        tracing::info!("SMS verification passed for phone: {}", e164_phone);
 
         // 2.查询信息
         let identity = Identity::PhoneNumber(e164_phone);
@@ -24,7 +24,7 @@ impl LoginService {
             Some(account) => account.user_id,
             None => self.register(&identity).await?,
         };
-        log::info!("Starting login process. {}", identity);
+        tracing::info!("Starting login process. {}", identity);
         self.do_login(user_id, false, AuthnMethod::PhonePassword, req_info)
             .await
     }

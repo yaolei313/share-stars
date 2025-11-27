@@ -18,4 +18,4 @@ rand.workspace = true
 jsonwebtoken.workspace = true
 validator.workspace = true
 serde.workspace = true
-log.workspace = true
+tracing.workspace = true

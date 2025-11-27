@@ -38,7 +38,6 @@ tower-http = { version = "0.6.6", features = ["full"] }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["json", "serde_json"] }
 validator = { version = "0.20", features = ["derive"] }
-log = "0.4"
 phf = { version = "0.11.3", features = ["macros"] }
 thiserror = { version = "2.0.12" }
 client-ip = "0.1.1"

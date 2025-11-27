@@ -15,7 +15,7 @@ pub async fn mfa_challenge(
     Json(payload): Json<MfaChallengeReq>,
 ) -> AppResult<Json<RespVo<()>>> {
     if let Err(e) = payload.validate() {
-        log::warn!("validation error: {}", e);
+        tracing::warn!("validation error: {}", e);
         return Err(AppError::InvalidArgument(Cow::Owned(e.to_string())));
     }
     state
@@ -32,7 +32,7 @@ pub async fn mfa_verify(
     Json(payload): Json<MfaVerifyReq>,
 ) -> AppResult<Json<RespVo<LoginResult>>> {
     if let Err(e) = payload.validate() {
-        log::warn!("invalid mfa verify request: {} {}", payload, e);
+        tracing::warn!("invalid mfa verify request: {} {}", payload, e);
         return Err(AppError::InvalidArgument(Cow::Owned(e.to_string())));
     }
     state

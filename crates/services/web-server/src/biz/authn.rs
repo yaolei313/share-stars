@@ -75,7 +75,7 @@ impl LoginService {
         let input_password_sha256 = hex::encode(hasher.finalize());
 
         if &input_password_sha256 != &account.password_hash {
-            log::warn!("password not matched. {}", user_id);
+            tracing::warn!("password not matched. {}", user_id);
             self.password_statistic_service
                 .add_password_error_count(user_id)
                 .await?;
@@ -86,12 +86,12 @@ impl LoginService {
     }
 
     pub async fn register(&self, idt: &Identity<'_>) -> AppResult<i64> {
-        log::info!("Initiating new user registration. {}", idt);
+        tracing::info!("Initiating new user registration. {}", idt);
         let new_user_id = self.id_generator.next_id()?;
         self.account_db_service
             .create_account(idt.provider(), idt.identifier(), new_user_id)
             .await?;
-        log::info!("User registration successful. {}", new_user_id);
+        tracing::info!("User registration successful. {}", new_user_id);
         Ok(new_user_id)
     }
 
@@ -107,7 +107,7 @@ impl LoginService {
             self.account_device_service
                 .save_new_account_device(user_id, req_info, authn_method)
                 .await?;
-            log::info!("new device.{} {}", user_id, &req_info.device_id);
+            tracing::info!("new device.{} {}", user_id, &req_info.device_id);
         } else {
             let trusted = self
                 .account_device_service
@@ -120,7 +120,7 @@ impl LoginService {
                     .await?;
                 return Err(AppError::UpgradedMFA(challenge));
             }
-            log::info!(
+            tracing::info!(
                 "login from trusted device. {} {}",
                 user_id,
                 &req_info.device_id
@@ -138,7 +138,7 @@ impl LoginService {
             expires_in: token.expires_in,
             refresh_token: token.refresh_token,
         };
-        log::info!("gen token finished. {}", user_id);
+        tracing::info!("gen token finished. {}", user_id);
         Ok(result)
     }
 }
@@ -146,11 +146,11 @@ impl LoginService {
 fn check_status(account: &Account) -> AppResult<()> {
     let user_id = account.user_id;
     if account.disabled {
-        log::warn!("account temporarily disabled. {}", user_id);
+        tracing::warn!("account temporarily disabled. {}", user_id);
         return Err(AppError::AccountTemporarilyDisabled);
     }
     if account.closed {
-        log::warn!("account closed. {}", user_id);
+        tracing::warn!("account closed. {}", user_id);
         return Err(AppError::AccountClosed);
     }
     Ok(())

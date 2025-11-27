@@ -82,7 +82,7 @@ impl AccountDbService {
             .insert(&mut *tx, &identity)
             .await?;
         tx.commit().await?;
-        log::info!("Account inserted successful. {}", identity.id);
+        tracing::info!("Account inserted successful. {}", identity.id);
 
         // sharding by identifier
         let lookup = LookupAccount {
@@ -94,7 +94,7 @@ impl AccountDbService {
         self.lookup_account_repo
             .insert(&self.pg_pool, &lookup)
             .await?;
-        log::info!("Account-Lookup inserted successful. {}", identity.id);
+        tracing::info!("Account-Lookup inserted successful. {}", identity.id);
 
         Ok(())
     }

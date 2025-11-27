@@ -77,11 +77,11 @@ impl JwtDelegate {
     ) -> Option<T> {
         let header = jsonwebtoken::decode_header(token).ok()?;
         let Some(ref kid) = header.kid else {
-            log::warn!("invalid token header. {}", token);
+            tracing::warn!("invalid token header. {}", token);
             return None;
         };
         let Some(key) = self.keys.get(kid) else {
-            log::warn!("invalid token header kid. {} {}", token, kid);
+            tracing::warn!("invalid token header kid. {} {}", token, kid);
             return None;
         };
         jsonwebtoken::decode::<T>(token, &key.decoding_key, validation)

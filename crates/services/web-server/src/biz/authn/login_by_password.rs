@@ -11,7 +11,7 @@ impl LoginService {
         password: &str,
         req_info: &RequestInfo,
     ) -> AppResult<LoginResult> {
-        log::info!("login by. {}", e164_phone);
+        tracing::info!("login by. {}", e164_phone);
         let identity = Identity::PhoneNumber(e164_phone);
         let account = self.query_then_check_status(&identity).await?;
         let Some(account) = account else {

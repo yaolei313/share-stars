@@ -99,3 +99,5 @@ pub struct NewDeviceRequestInfo {
     pub ip: Option<IpAddr>,
     pub request_id: Option<String>,
 }
+
+pub struct PlatformInfo {}

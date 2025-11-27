@@ -13,7 +13,7 @@ pub async fn register_device(
 ) -> AppResult<Json<RespVo<RegisterDeviceResult>>> {
     // 校验参数
     if let Err(err) = payload.validate() {
-        log::warn!("validation error: {}", err);
+        tracing::warn!("validation error: {}", err);
         return Err(AppError::InvalidArgument(Cow::Owned(err.to_string())));
     }
     todo!()

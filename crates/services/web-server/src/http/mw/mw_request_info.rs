@@ -16,7 +16,6 @@ where
 
     async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
         let ip = get_ip_from_header(&parts.headers).or_else(|| get_ip_from_connect_info(parts));
-
         let request_id = get_header_value(&parts.headers, "x-request-id");
         let Some(device_id) = get_header_value(&parts.headers, "x-device-id") else {
             return Err(AppError::InvalidRequest(Cow::Borrowed(
@@ -47,6 +46,9 @@ where
         parts: &mut Parts,
         state: &S,
     ) -> Result<Option<Self>, Self::Rejection> {
+        let ip = get_ip_from_header(&parts.headers).or_else(|| get_ip_from_connect_info(parts));
+        let request_id = get_header_value(&parts.headers, "x-request-id");
+        let device_id = get_header_value(&parts.headers, "x-device-id");
         todo!()
     }
 }
@@ -72,3 +74,6 @@ fn get_ip_from_connect_info(parts: &mut Parts) -> Option<IpAddr> {
         .get::<ConnectInfo<SocketAddr>>()
         .map(|ConnectInfo(addr)| addr.ip())
 }
+
+const PLAT_INFO_HEADER: &str = "x-platform-info";
+const UA_HEADER: &str = "User-Agent";

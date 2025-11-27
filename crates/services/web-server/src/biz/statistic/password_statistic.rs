@@ -20,11 +20,11 @@ impl PasswordStatisticService {
         let val = conn.get(key).await?;
         if let Some(val) = val {
             let count = val.parse::<i32>().unwrap_or_else(|_e| {
-                log::warn!("invalid val.{}", val);
+                tracing::warn!("invalid val.{}", val);
                 0
             });
             if count >= MAX_FAIL_COUNT_ONE_DAY {
-                log::warn!("too many incorrect password attempts. {}", user_id);
+                tracing::warn!("too many incorrect password attempts. {}", user_id);
                 return Err(AppError::TooManyIncorrectPasswordAttempts);
             }
         }
