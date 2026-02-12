@@ -10,8 +10,8 @@ pub struct PasswordStatisticService {
 }
 
 impl PasswordStatisticService {
-    pub fn new(redis_client: Arc<redis::Client>) -> Self {
-        Self { redis_client }
+    pub fn new(redis_client: Arc<redis::Client>) -> anyhow::Result<Self> {
+        Ok(Self { redis_client })
     }
 
     pub async fn is_exceed_password_error_limit(&self, user_id: i64) -> AppResult<()> {
@@ -20,11 +20,11 @@ impl PasswordStatisticService {
         let val = conn.get(key).await?;
         if let Some(val) = val {
             let count = val.parse::<i32>().unwrap_or_else(|_e| {
-                log::warn!("invalid val.{}", val);
+                tracing::warn!("invalid val.{}", val);
                 0
             });
             if count >= MAX_FAIL_COUNT_ONE_DAY {
-                log::warn!("too many incorrect password attempts. {}", user_id);
+                tracing::warn!("too many incorrect password attempts. {}", user_id);
                 return Err(AppError::TooManyIncorrectPasswordAttempts);
             }
         }

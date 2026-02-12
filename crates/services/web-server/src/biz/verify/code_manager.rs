@@ -23,7 +23,6 @@ impl CodeManager {
     }
 
     pub async fn gen_code(&self, key: &str, expiration_seconds: u64) -> AppResult<String> {
-        // 避免
         let val = lib_utils::rand_verify_code();
 
         let mut conn = self.redis_client.get_multiplexed_async_connection().await?;
@@ -36,7 +35,7 @@ impl CodeManager {
 
     pub async fn validate_code(&self, key: &str, input_code: &str) -> AppResult<()> {
         if input_code.len() != 6 {
-            log::info!("Invalid code length: {}", input_code);
+            tracing::info!("invalid verification code length: {}", input_code);
             return Err(AppError::InvalidSmsCode);
         }
 
@@ -50,9 +49,9 @@ impl CodeManager {
             .await?;
 
         if result == 1 {
-            log::info!("not matched code: {}", input_code);
             Ok(())
         } else {
+            tracing::warn!("invalid verification code: {}", input_code);
             Err(AppError::InvalidSmsCode)
         }
     }

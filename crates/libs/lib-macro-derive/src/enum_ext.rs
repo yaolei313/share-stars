@@ -19,6 +19,10 @@ pub(crate) fn try_expand_bind_code_derive(input: DeriveInput) -> Result<TokenStr
     }
 }
 
+/*
+ * Ident 代表rust中的标识符
+ * Span 代表位置信息
+ */
 fn impl_enum(enum_name: &Ident, data_enum: DataEnum) -> Result<TokenStream> {
     // Collect all the match arms for the `code()` method.
     let mut match_arms = Vec::new();
@@ -58,17 +62,24 @@ fn impl_enum(enum_name: &Ident, data_enum: DataEnum) -> Result<TokenStream> {
 
         // Determine if the variant has fields (e.g., `Fail(String)` or `InvalidArgument(String)`).
         // If it does, we need to match with `_` to ignore the field data.
-        let match_pattern = match variant.fields {
-            syn::Fields::Unnamed(_) => {
+        let match_pattern = match &variant.fields {
+            syn::Fields::Unnamed(fields) => {
                 exists_unnamed = true;
+
+                let num_fields = fields.unnamed.len();
+                let underscores = (0..num_fields).map(|_| quote! {_});
+
                 // If it has unnamed fields (e.g., `Fail(String)`), match with `VariantName(_)`.
-                quote! { #enum_name::#variant_name(_) => #code_value, }
+                quote! { #enum_name::#variant_name(#(#underscores),*) => #code_value }
             }
-            _ => {
-                // Otherwise (unit or named fields), match directly with `VariantName`.
-                // Note: For named fields, you'd typically destructure them too, but for `code()`
-                // which only depends on the variant name, we can treat them like unit variants.
-                quote! { #enum_name::#variant_name => #code_value, }
+            syn::Fields::Named(_) => {
+                // 对于命名字段 (e.g., StructVariant { a: i32 }), 我们使用 `..` 来忽略字段数据
+                // 即使是命名字段，也需要模式匹配来忽略数据，否则会报“没有使用”的警告
+                quote! { #enum_name::#variant_name{..} => #code_value }
+            }
+            syn::Fields::Unit => {
+                // 单元变体 (e.g., Success)
+                quote! { #enum_name::#variant_name => #code_value }
             }
         };
 
@@ -77,16 +88,18 @@ fn impl_enum(enum_name: &Ident, data_enum: DataEnum) -> Result<TokenStream> {
         match_arms.push(match_pattern);
 
         from_arms.push(quote! {
-            #code_value => Some(#enum_name::#variant_name),
-        })
+            #code_value => Some(#enum_name::#variant_name)
+        });
     }
 
     let from_code_fn = if !exists_unnamed {
+        from_arms.push(quote! {
+            _ => None
+        });
         quote! {
             pub fn from_code(code: i32) -> Option<Self> {
                 match code {
-                    #(#from_arms)*
-                    _ => None,
+                    #(#from_arms),*
                 }
             }
         }
@@ -99,13 +112,19 @@ fn impl_enum(enum_name: &Ident, data_enum: DataEnum) -> Result<TokenStream> {
         impl #enum_name {
             pub fn code(&self) -> i32 {
                 match self {
-                    #(#match_arms)* // Expand all collected match arms
+                    #(#match_arms),* // Expand all collected match arms
                 }
             }
 
             #from_code_fn
         }
     };
+
+    // panic!(
+    //     "Generated code for {}:\n{}",
+    //     enum_name,
+    //     expanded.to_string()
+    // );
 
     Ok(expanded.into()) // Convert the generated tokens into a TokenStream.
 }

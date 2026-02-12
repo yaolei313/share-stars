@@ -2,7 +2,6 @@ use crate::db::models::LookupAccount;
 use crate::db::repositories::lookup_account_repository::LookupAccountRepository;
 use sqlx::{PgExecutor, PgPool, Result as SqlxResult};
 use std::fmt::Debug;
-use tracing::log;
 
 #[derive(Debug)]
 pub struct PgLookupAccountRepository {
@@ -40,7 +39,7 @@ impl LookupAccountRepository for PgLookupAccountRepository {
             .bind(lookup.user_id)
             .fetch_one(executor)
             .await?;
-        log::info!("inserted lookup_account (id: {:?})", id);
+        tracing::info!("inserted lookup_account (id: {:?})", id);
         Ok(())
     }
 }

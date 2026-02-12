@@ -2,8 +2,9 @@ use anyhow::Result;
 
 use futures::future::join_all;
 use phf::phf_map;
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
 use std::{env, fs};
 use tokio::sync::Mutex;
 use tool_box::pg_meta::PgMeta;
@@ -34,6 +35,8 @@ async fn main() -> Result<()> {
         "device",
         "lookup_device",
         "prefilter_device",
+        "sms_template",
+        "email_template",
     ];
     let mut futures = Vec::new();
     for table in tables {
@@ -71,3 +74,36 @@ static _CONFIG_MAP: phf::Map<&'static str, &'static str> = phf_map! {
     "env" => "production",
     "debug_mode" => "false",
 };
+
+// 在模块内部，保持静态变量私有，以供两个函数共享
+static CONFIG_ITEM: OnceLock<HashMap<&'static str, &'static str>> = OnceLock::new();
+
+/// 启动时调用：尝试读取配置并初始化静态 Map。
+/// 失败则返回错误，阻止服务启动。
+pub fn init_config() -> Result<()> {
+    let loaded_map = {
+        let mut map = HashMap::new();
+        // 模拟读取配置文件成功
+        map.insert("app_name", "My Awesome App");
+        map.insert("version", "1.0.0");
+        map.insert("env", "production");
+        map.insert("debug_mode", "false");
+        map
+    };
+
+    CONFIG_ITEM
+        .set(loaded_map)
+        .map_err(|_| anyhow::anyhow!("Configuration has already been initialized."))?;
+
+    Ok(())
+}
+
+/// 服务启动后调用：安全地获取配置值。
+pub fn get_config(key: &str) -> Option<&'static str> {
+    // 使用 expect() 断言：如果服务已启动，Map 必须存在。
+    CONFIG_ITEM
+        .get()
+        .expect("Configuration must be initialized via init_config() before calling get_config()")
+        .get(key)
+        .copied()
+}

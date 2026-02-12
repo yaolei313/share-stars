@@ -1,9 +1,11 @@
+use crate::biz::verify::VerifyScenario;
 use crate::http::vo::mfa::MfaVerificationChallenge;
 use crate::http::vo::RespVo;
 use axum::response::{IntoResponse, Response};
-use axum::{BoxError, Json};
+use axum::Json;
 use lib_macro_derive::BindCode;
 use redis::RedisError;
+use std::borrow::Cow;
 use std::io;
 use thiserror::Error;
 use twilio::TwilioError;
@@ -12,15 +14,15 @@ use twilio::TwilioError;
 pub enum AppError {
     #[code(1)]
     #[error("fail:{0}")]
-    Fail(String),
+    Fail(Cow<'static, str>),
 
     #[code(10)]
     #[error("invalid argument: {0}")]
-    InvalidArgument(String),
+    InvalidArgument(Cow<'static, str>),
 
     #[code(400)]
     #[error("invalid request")]
-    InvalidRequest,
+    InvalidRequest(Cow<'static, str>),
 
     #[code(401)]
     #[error("authentication required")]
@@ -36,7 +38,7 @@ pub enum AppError {
 
     #[code(500)]
     #[error("internal server error: {0}")]
-    InternalServerError(#[from] BoxError),
+    InternalServerError(Cow<'static, str>),
 
     #[code(503)]
     #[error("service unavailable, try again later")]
@@ -44,7 +46,7 @@ pub enum AppError {
 
     // --below system error--
     #[code(1000)]
-    #[error("database operation failed: {0}")]
+    #[error("database operation failed")]
     ComponentDatabase(#[from] sqlx::Error),
 
     #[code(1001)]
@@ -57,7 +59,7 @@ pub enum AppError {
 
     #[code(1003)]
     #[error("invalid config: {0}")]
-    ComponentInvalidConfig(&'static str),
+    ComponentInvalidConfig(Cow<'static, str>),
 
     #[code(1004)]
     #[error("twilio error: {0}")]
@@ -109,21 +111,37 @@ pub enum AppError {
     InvalidSmsCode,
 
     #[code(2010)]
-    #[error("please wait {0} seconds before requesting another code")]
-    SmsFrequencyExceed(i64),
+    #[error("please wait {1} seconds before requesting another code")]
+    FrequencyExceed(VerifyScenario, i64),
 
     #[code(2011)]
-    #[error("sms quota exceeded")]
-    SmsPhoneDailyQuotaExceed,
+    #[error("quota exceeded")]
+    DailyQuotaExceed(VerifyScenario, i32),
 
     #[code(2012)]
-    #[error("sms quota exceeded")]
-    SmsDeviceDailyQuotaExceed,
+    #[error("quota exceeded")]
+    DeviceDailyQuotaExceed(VerifyScenario, i32),
+
+    #[code(2013)]
+    #[error("please wait {0} seconds before requesting another code")]
+    EmailFrequencyExceed(i64),
+
+    #[code(2014)]
+    #[error("email quota exceeded")]
+    EmailDailyQuotaExceed,
+
+    #[code(2015)]
+    #[error("email quota exceeded")]
+    EmailDeviceDailyQuotaExceed,
+
+    #[code(2016)]
+    #[error("template error: {0}")]
+    TemplateError(Cow<'static, str>),
 }
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
-        log::error!("{:?}", self);
+        tracing::error!("{:?}", self);
         let vo: RespVo<()> = RespVo::from(self);
         Json(vo).into_response()
     }

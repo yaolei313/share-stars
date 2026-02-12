@@ -1,73 +1,80 @@
-use crate::biz::dto::{AuthnMethodEnum, TokenInfo};
-use crate::biz::token::JwtManager;
-use crate::http::vo::error::AppError;
-use crate::http::vo::{AppResult, RequestInfo};
+use crate::biz::dto::{AuthnMethod, TokenInfo};
+use crate::config::JwtSetting;
+use crate::http::vo::{AccessContext, AppResult};
 use chrono::Utc;
-use jsonwebtoken::{decode, decode_header, encode, Algorithm, Header};
+use jsonwebtoken::{Algorithm, Validation};
+use lib_utils::JwtDelegate;
 use serde::{Deserialize, Serialize};
 
-pub struct TokenService {
-    jwt_manager: JwtManager,
+pub struct AccessTokenService {
+    jwt_delegate: JwtDelegate,
+    algorithm: Algorithm,
+    issuer: String,
+    audience: String,
+    expire_seconds: u32,
+    validation: Validation,
 }
 
-impl TokenService {
-    pub fn new(jwt_manager: JwtManager) -> Self {
-        Self { jwt_manager }
+impl AccessTokenService {
+    pub fn new(settings: &JwtSetting) -> anyhow::Result<Self> {
+        let jwt_delegate = JwtDelegate::new(&settings.keys)?;
+        let mut validation = Validation::new(Algorithm::RS256);
+        validation.set_audience(&[settings.audience.clone()]);
+        validation.set_issuer(&[settings.issuer.clone()]);
+        Ok(Self {
+            jwt_delegate,
+            algorithm: Algorithm::RS256,
+            issuer: settings.issuer.clone(),
+            audience: settings.audience.clone(),
+            expire_seconds: settings.expire_seconds,
+            validation,
+        })
     }
 
     pub fn create_access_token(
         &self,
         user_id: i64,
-        authn_method: &AuthnMethodEnum,
-        req_info: &RequestInfo,
+        authn_method: AuthnMethod,
+        req_info: &AccessContext,
     ) -> AppResult<TokenInfo> {
-        let manager = &self.jwt_manager;
-        let Some(key) = manager.get_default_jwt_key() else {
-            return Err(AppError::ComponentInvalidConfig(
-                "not found default jwt key config",
-            ));
-        };
-        let expires_in = manager.expire_seconds as i64;
         let iat = Utc::now().timestamp();
-        let exp = iat + expires_in;
-        let dvf = format!("{}-{}", &req_info.platform.code(), &req_info.device_id);
+        let exp = iat + self.expire_seconds as i64;
         let claims = AccessTokenClaims {
-            aud: manager.audience.clone(),
+            aud: self.audience.clone(),
             exp,
             iat,
-            iss: manager.issuer.to_string(),
+            iss: self.issuer.clone(),
             sub: user_id,
-            dvf,
+            dvf: req_info.device_id.clone(),
             aum: authn_method.code(),
         };
-        let mut header = Header::new(Algorithm::RS256);
-        header.kid = Some(key.kid.clone());
-        let token = encode(&header, &claims, &key.encoding_key)?;
+
+        let token = self
+            .jwt_delegate
+            .generate_jwt_token(&claims, self.algorithm)?;
         Ok(TokenInfo {
             access_token: token,
-            expires_in,
             refresh_token: None,
+            expires_in: self.expire_seconds as i64,
         })
     }
 
     pub fn validate_access_token(&self, token: &str) -> Option<AccessTokenClaims> {
-        let manager = &self.jwt_manager;
-        let header = decode_header(token).ok()?;
-        let Some(ref kid) = header.kid else {
-            log::warn!("invalid token header. {}", token);
-            return None;
-        };
-        let Some(key) = manager.keys.get(kid) else {
-            log::warn!("invalid token header kid. {} {}", token, kid);
-            return None;
-        };
-        let Ok(data) = decode::<AccessTokenClaims>(token, &key.decoding_key, &manager.validation)
-        else {
-            log::warn!("invalid token kid. {} {}", token, kid);
+        let claims = self
+            .jwt_delegate
+            .validate_jwt_token::<AccessTokenClaims>(token, &self.validation)?;
+        if !self.verify_validity_of_claims(&claims) {
             return None;
         };
 
-        Some(data.claims)
+        Some(claims)
+    }
+
+    fn verify_validity_of_claims(&self, claims: &AccessTokenClaims) -> bool {
+        let now = Utc::now().timestamp();
+        let exp = claims.exp;
+
+        todo!()
     }
 }
 

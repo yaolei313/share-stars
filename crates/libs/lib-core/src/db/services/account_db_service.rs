@@ -4,10 +4,12 @@ use crate::db::repositories::{
     PgAccountDeviceRepository, PgAccountIdentityRepository, PgAccountRepository,
     PgLookupAccountRepository,
 };
-use crate::RepositoryState;
+use crate::db::RepositoryState;
+use crate::db::SqlxResult;
 use chrono::Utc;
-use sqlx::{PgPool, Result as SqlxResult};
+use sqlx::PgPool;
 use std::sync::Arc;
+use tracing::log;
 
 pub struct AccountDbService {
     pg_pool: PgPool,
@@ -32,7 +34,7 @@ impl AccountDbService {
         &self,
         provider: i32,
         identifier: &str,
-    ) -> Result<Option<Account>, sqlx::Error> {
+    ) -> SqlxResult<Option<Account>> {
         let user_id = self.lookup_user_id(provider, identifier).await?;
 
         let passport = if let Some(user_id) = user_id {
@@ -49,7 +51,7 @@ impl AccountDbService {
         provider: i32,
         identifier: &str,
         user_id: i64,
-    ) -> Result<(), sqlx::Error> {
+    ) -> SqlxResult<()> {
         let now = Utc::now();
         let account = Account {
             user_id,
@@ -80,26 +82,24 @@ impl AccountDbService {
             .insert(&mut *tx, &identity)
             .await?;
         tx.commit().await?;
+        tracing::info!("Account inserted successful. {}", identity.id);
 
+        // sharding by identifier
         let lookup = LookupAccount {
             id: 0,
             identifier: identifier.to_string(),
             provider,
             user_id,
         };
-        // sharding by identifier
         self.lookup_account_repo
             .insert(&self.pg_pool, &lookup)
             .await?;
+        tracing::info!("Account-Lookup inserted successful. {}", identity.id);
 
         Ok(())
     }
 
-    async fn lookup_user_id(
-        &self,
-        provider: i32,
-        identifier: &str,
-    ) -> Result<Option<i64>, sqlx::Error> {
+    async fn lookup_user_id(&self, provider: i32, identifier: &str) -> SqlxResult<Option<i64>> {
         let mapping = self
             .lookup_account_repo
             .find_by_provider_identifier(provider, identifier)
@@ -120,5 +120,15 @@ impl AccountDbService {
 
     pub async fn add_account_device(&self, device: &AccountDevice) -> SqlxResult<()> {
         self.account_device_repo.insert(&self.pg_pool, device).await
+    }
+
+    pub async fn query_identities(
+        &self,
+        user_id: i64,
+        providers: Vec<i32>,
+    ) -> SqlxResult<Vec<AccountIdentity>> {
+        self.account_identity_repo
+            .find_by_user_id_providers(user_id, providers)
+            .await
     }
 }

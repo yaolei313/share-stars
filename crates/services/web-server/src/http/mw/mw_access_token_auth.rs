@@ -1,7 +1,7 @@
-use crate::biz::dto::AuthnMethodEnum;
-use crate::http::AppState;
+use crate::biz::dto::AuthnMethod;
 use crate::http::mw::mw_base;
 use crate::http::vo::error::AppError;
+use crate::http::AppState;
 use axum::extract::{FromRequestParts, OptionalFromRequestParts};
 use axum::http::request::Parts;
 use chrono::{DateTime, TimeZone, Utc};
@@ -11,7 +11,7 @@ use mw_base::TokenSchema;
 pub struct CurrentUser {
     pub user_id: i64,
     pub login_at: DateTime<Utc>,
-    pub authn_method: Option<AuthnMethodEnum>,
+    pub authn_method: Option<AuthnMethod>,
 }
 
 pub struct AccessTokenAuth(pub CurrentUser);
@@ -121,6 +121,6 @@ fn validate_access_token(state: &AppState, token: &str) -> Option<CurrentUser> {
     Some(CurrentUser {
         user_id: claim.sub,
         login_at,
-        authn_method: AuthnMethodEnum::from_code(claim.aum),
+        authn_method: AuthnMethod::from_code(claim.aum),
     })
 }

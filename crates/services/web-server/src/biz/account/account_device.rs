@@ -1,7 +1,5 @@
-use crate::biz::dto::AuthnMethodEnum;
-use crate::biz::security::MultiFactorAuthService;
-use crate::http::vo::error::AppError;
-use crate::http::vo::{AppResult, RequestInfo};
+use crate::biz::dto::AuthnMethod;
+use crate::http::vo::{AccessContext, AppResult};
 use chrono::Utc;
 use lib_core::db::models::AccountDevice;
 use lib_core::db::services::AccountDbService;
@@ -9,48 +7,38 @@ use std::sync::Arc;
 
 pub struct AccountDeviceService {
     account_db_service: Arc<AccountDbService>,
-    mfa_service: Arc<MultiFactorAuthService>,
 }
 
 impl AccountDeviceService {
-    pub fn new(
-        account_db_service: Arc<AccountDbService>,
-        mfa_service: Arc<MultiFactorAuthService>,
-    ) -> Self {
+    pub fn new(account_db_service: Arc<AccountDbService>) -> Self {
         AccountDeviceService {
             account_db_service: account_db_service.clone(),
-            mfa_service: mfa_service.clone(),
         }
     }
 
     pub async fn check_trusted_device(
         &self,
         user_id: i64,
-        request_info: &RequestInfo,
-    ) -> AppResult<()> {
+        request_info: &AccessContext,
+    ) -> AppResult<bool> {
         let account_device = self
             .account_db_service
             .query_account_device(user_id, &request_info.device_id)
             .await?;
-        if !self.is_trusted(account_device) {
-            let challenge = self.mfa_service.generate_challenge().await?;
-            return Err(AppError::UpgradedMFA(challenge));
-        }
-        log::info!("login from trusted device: {}", &request_info.device_id);
-        Ok(())
+        Ok(self.is_trusted(account_device))
     }
 
     pub async fn save_new_account_device(
         &self,
         user_id: i64,
-        device: &RequestInfo,
-        auth_method: &AuthnMethodEnum,
+        device: &AccessContext,
+        auth_method: AuthnMethod,
     ) -> AppResult<()> {
         let db_device = AccountDevice {
             id: 0,
             user_id,
             device_id: device.device_id.clone(),
-            last_login_ip: device.ip,
+            last_login_ip: device.client_ip,
             last_login_method: auth_method.code(),
             last_login_at: Default::default(),
             nickname: None,

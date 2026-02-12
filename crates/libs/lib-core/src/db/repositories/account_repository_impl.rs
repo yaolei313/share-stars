@@ -2,7 +2,6 @@ use crate::db::models::Account;
 use crate::db::repositories::AccountRepository;
 use sqlx::{PgExecutor, PgPool, Result as SqlxResult};
 use std::fmt::Debug;
-use tracing::log;
 
 #[derive(Debug)]
 pub struct PgAccountRepository {
@@ -33,7 +32,7 @@ impl AccountRepository for PgAccountRepository {
             .bind(account.updated_at)
             .fetch_one(executor)
             .await?;
-        log::info!("inserted account. {:?}", account);
+        tracing::info!("inserted account. {:?}", account);
         Ok(())
     }
 }

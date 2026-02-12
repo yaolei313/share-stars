@@ -1,11 +1,12 @@
 use crate::biz::account::AccountDeviceService;
-use crate::biz::dto::{AuthnMethodEnum, Identity};
-use crate::biz::security::PasswordStatisticService;
-use crate::biz::token::TokenService;
-use crate::biz::verify::SmsService;
+pub(crate) use crate::biz::authn::mfa::MultiFactorAuthService;
+use crate::biz::dto::{AuthnMethod, Identity};
+use crate::biz::statistic::PasswordStatisticService;
+use crate::biz::token::AccessTokenService;
+use crate::biz::verify::VerifyManager;
 use crate::http::vo::error::AppError;
 use crate::http::vo::login::LoginResult;
-use crate::http::vo::{AppResult, RequestInfo};
+use crate::http::vo::{AccessContext, AppResult};
 use lib_core::db::models::Account;
 use lib_core::db::services::AccountDbService;
 use lib_utils::IdGenerator;
@@ -15,13 +16,16 @@ use std::sync::Arc;
 mod login_by_password;
 mod login_by_sms;
 
+mod mfa;
+
 pub struct LoginService {
     id_generator: Arc<IdGenerator>,
-    token_service: Arc<TokenService>,
+    token_service: Arc<AccessTokenService>,
     password_statistic_service: Arc<PasswordStatisticService>,
     account_db_service: Arc<AccountDbService>,
     account_device_service: Arc<AccountDeviceService>,
-    sms_service: Arc<SmsService>,
+    verify_manager: Arc<VerifyManager>,
+    mfa_service: Arc<MultiFactorAuthService>,
 }
 
 impl LoginService {
@@ -30,8 +34,9 @@ impl LoginService {
         account_db_service: Arc<AccountDbService>,
         password_statistic_service: Arc<PasswordStatisticService>,
         account_device_service: Arc<AccountDeviceService>,
-        token_service: Arc<TokenService>,
-        sms_service: Arc<SmsService>,
+        token_service: Arc<AccessTokenService>,
+        verify_manager: Arc<VerifyManager>,
+        mfa_service: Arc<MultiFactorAuthService>,
     ) -> Self {
         Self {
             id_generator,
@@ -39,7 +44,8 @@ impl LoginService {
             password_statistic_service,
             account_db_service,
             account_device_service,
-            sms_service,
+            verify_manager,
+            mfa_service,
         }
     }
 
@@ -69,7 +75,7 @@ impl LoginService {
         let input_password_sha256 = hex::encode(hasher.finalize());
 
         if &input_password_sha256 != &account.password_hash {
-            log::warn!("password not matched. {}", user_id);
+            tracing::warn!("password not matched. {}", user_id);
             self.password_statistic_service
                 .add_password_error_count(user_id)
                 .await?;
@@ -80,10 +86,12 @@ impl LoginService {
     }
 
     pub async fn register(&self, idt: &Identity<'_>) -> AppResult<i64> {
+        tracing::info!("Initiating new user registration. {}", idt);
         let new_user_id = self.id_generator.next_id()?;
         self.account_db_service
             .create_account(idt.provider(), idt.identifier(), new_user_id)
             .await?;
+        tracing::info!("User registration successful. {}", new_user_id);
         Ok(new_user_id)
     }
 
@@ -91,24 +99,34 @@ impl LoginService {
         &self,
         user_id: i64,
         new_register: bool,
-        authn_method: &AuthnMethodEnum,
-        req_info: &RequestInfo,
+        authn_method: AuthnMethod,
+        ctx: &AccessContext,
     ) -> AppResult<LoginResult> {
         // 1.保存设备或可信设备校验
         if new_register {
             self.account_device_service
-                .save_new_account_device(user_id, req_info, authn_method)
+                .save_new_account_device(user_id, ctx, authn_method)
                 .await?;
+            tracing::info!("new device.{} {}", user_id, &ctx.device_id);
         } else {
-            self.account_device_service
-                .check_trusted_device(user_id, req_info)
+            let trusted = self
+                .account_device_service
+                .check_trusted_device(user_id, ctx)
                 .await?;
+            if !trusted {
+                let challenge = self
+                    .mfa_service
+                    .generate_challenge(user_id, authn_method, ctx)
+                    .await?;
+                return Err(AppError::UpgradedMFA(challenge));
+            }
+            tracing::info!("login from trusted device. {} {}", user_id, &ctx.device_id);
         }
 
         // 2.token生成
         let token = self
             .token_service
-            .create_access_token(user_id, authn_method, req_info)?;
+            .create_access_token(user_id, authn_method, ctx)?;
         let result = LoginResult {
             user_id,
             new_register,
@@ -116,7 +134,7 @@ impl LoginService {
             expires_in: token.expires_in,
             refresh_token: token.refresh_token,
         };
-        log::info!("gen token finished. {}", user_id);
+        tracing::info!("gen token finished. {}", user_id);
         Ok(result)
     }
 }
@@ -124,11 +142,11 @@ impl LoginService {
 fn check_status(account: &Account) -> AppResult<()> {
     let user_id = account.user_id;
     if account.disabled {
-        log::warn!("account temporarily disabled. {}", user_id);
+        tracing::warn!("account temporarily disabled. {}", user_id);
         return Err(AppError::AccountTemporarilyDisabled);
     }
     if account.closed {
-        log::warn!("account closed. {}", user_id);
+        tracing::warn!("account closed. {}", user_id);
         return Err(AppError::AccountClosed);
     }
     Ok(())
