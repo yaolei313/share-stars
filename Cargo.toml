@@ -14,19 +14,20 @@ lib-core = { path = "crates/libs/lib-core", version = "0.0.0" }
 lib-macro = { path = "crates/libs/lib-macro", version = "0.0.0" }
 lib-macro-derive = { path = "crates/libs/lib-macro-derive", version = "0.0.0" }
 # other crates
-anyhow = "1.0.98"
-axum = { version = "0.8.4", features = ["macros", "http2"] }
-axum-extra = { version = "0.10.1", features = ["typed-header"] }
+anyhow = "1.0"
+axum = { version = "0.8", features = ["macros", "http2"] }
+axum-extra = { version = "0.12", features = ["typed-header"] }
 chrono = { version = "0.4", features = ["serde"] }
-dotenv = "0.15.0"
-futures = "0.3.31"
-headers = "0.4.1"
-jsonwebtoken = "9.3.1"
-serde = { version = "1.0.219", features = ["derive"] }
-serde_json = "1.0.140"
-sqlx = { version = "0.8.6", features = ["runtime-tokio", "postgres", "chrono", "ipnet"] }
-tokio = { version = "1.45.1", features = ["full"] }
-tower = { version = "0.5.2", features = [
+dotenv = "0.15"
+futures = "0.3"
+headers = "0.4"
+jsonwebtoken = { version = "10.2", features = ["rust_crypto"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.9"
+serde_json = "1.0"
+sqlx = { version = "0.8", features = ["runtime-tokio", "postgres", "chrono", "ipnet"] }
+tokio = { version = "1.48", features = ["full"] }
+tower = { version = "0.5", features = [
     "util",
     "timeout",
     "limit",
@@ -34,26 +35,32 @@ tower = { version = "0.5.2", features = [
     "steer",
     "filter",
 ] }
-tower-http = { version = "0.6.6", features = ["full"] }
-tracing = "0.1.41"
-tracing-subscriber = { version = "0.3.19", features = ["json", "serde_json"] }
+tower-http = { version = "0.6", features = ["full"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["json", "serde_json"] }
 validator = { version = "0.20", features = ["derive"] }
-phf = { version = "0.11.3", features = ["macros"] }
-thiserror = { version = "2.0.12" }
-client-ip = "0.1.1"
+thiserror = { version = "2.0" }
+client-ip = "0.1"
 phonenumber = "0.3"
-sha2 = "0.10.8"
-hex = "0.4.3"
-rsa = { version = "0.9.8", features = ["sha2", "pem", "pkcs5", "default"] }
-rand = "0.9.1"
+sha2 = "0.10"
+hex = "0.4"
+rsa = { version = "0.9", features = ["sha2", "pem", "pkcs5", "default"] }
+rand = "0.9"
 pkcs8 = { version = "0.10", features = ["std", "alloc", "pem", "encryption"] }
-config = "0.15.11"
-sonyflake = "0.3"
-rs-snowflake = "*"
-twilio = { version = "1.1.0" }
-redis = { version = "0.32.2", features = ["tokio-comp"] }
+config = "0.15"
+sonyflake = "0.4"
+rs-snowflake = "0.6"
+twilio = { version = "1.1" }
+redis = { version = "1.0", features = ["tokio-comp"] }
 regex = "1"
 dirs = "6"
-base64 = "0.22.1"
-strfmt = "0.2.5"
-tera = "1.20.1"
+base64 = "0.22"
+strfmt = "0.2"
+tera = "1.20"
+ua-parser = "0.2"
+cookie = "0.18"
+http = "1.4"
+accept-language = "3.1"
+phf = { version = "0.13", features = ["macros"] }
+strum = "0.27"
+strum_macros = "0.27"

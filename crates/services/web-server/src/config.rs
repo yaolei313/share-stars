@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use config::{Config, File};
 use lib_utils::KeySetting;
 use serde::Deserialize;
@@ -119,7 +119,7 @@ impl AppSettings {
         let run_mode = env::var("RUN_MODE")
             .unwrap_or_else(|_| "dev".into())
             .to_lowercase();
-        let database_url = env::var("DATABASE_URL")?;
+        let database_url = env::var("DATABASE_URL").context("Failed to get DATABASE_URL")?;
 
         let settings = Config::builder()
             .add_source(File::with_name("config/application"))
@@ -132,9 +132,12 @@ impl AppSettings {
             )
             .set_default("database.database_url", database_url)?
             .set_default("env", run_mode)?
-            .build()?;
-        let app_settings: AppSettings = settings.try_deserialize()?;
-        app_settings.validate()?;
+            .build()
+            .context("Failed to build config")?;
+        let app_settings: AppSettings = settings
+            .try_deserialize()
+            .context("Failed to parse config")?;
+        app_settings.validate().context("Invalid config")?;
 
         Ok(app_settings)
     }

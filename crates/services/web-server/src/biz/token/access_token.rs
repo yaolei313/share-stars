@@ -1,6 +1,6 @@
 use crate::biz::dto::{AuthnMethod, TokenInfo};
 use crate::config::JwtSetting;
-use crate::http::vo::{AppResult, RequestInfo};
+use crate::http::vo::{AccessContext, AppResult};
 use chrono::Utc;
 use jsonwebtoken::{Algorithm, Validation};
 use lib_utils::JwtDelegate;
@@ -35,7 +35,7 @@ impl AccessTokenService {
         &self,
         user_id: i64,
         authn_method: AuthnMethod,
-        req_info: &RequestInfo,
+        req_info: &AccessContext,
     ) -> AppResult<TokenInfo> {
         let iat = Utc::now().timestamp();
         let exp = iat + self.expire_seconds as i64;

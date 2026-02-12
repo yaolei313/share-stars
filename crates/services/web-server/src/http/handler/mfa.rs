@@ -1,4 +1,4 @@
-use crate::http::mw::ExtractRequestInfo;
+use crate::http::mw::ExtractAccessContext;
 use crate::http::vo::error::AppError;
 use crate::http::vo::login::LoginResult;
 use crate::http::vo::mfa::{MfaChallengeReq, MfaVerifyReq};
@@ -11,7 +11,7 @@ use validator::Validate;
 
 pub async fn mfa_challenge(
     State(state): State<AppState>,
-    ExtractRequestInfo(req_info): ExtractRequestInfo,
+    ExtractAccessContext(req_info): ExtractAccessContext,
     Json(payload): Json<MfaChallengeReq>,
 ) -> AppResult<Json<RespVo<()>>> {
     if let Err(e) = payload.validate() {
@@ -28,7 +28,7 @@ pub async fn mfa_challenge(
 
 pub async fn mfa_verify(
     State(state): State<AppState>,
-    ExtractRequestInfo(req_info): ExtractRequestInfo,
+    ExtractAccessContext(req_info): ExtractAccessContext,
     Json(payload): Json<MfaVerifyReq>,
 ) -> AppResult<Json<RespVo<LoginResult>>> {
     if let Err(e) = payload.validate() {

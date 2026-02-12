@@ -3,7 +3,7 @@ use crate::biz::sms::SmsSender;
 use crate::biz::statistic::VerifyStatistic;
 use crate::biz::verify::{CodeManager, VerifyScenario};
 use crate::http::vo::error::AppError;
-use crate::http::vo::{AppResult, RequestInfo};
+use crate::http::vo::{AccessContext, AppResult};
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -33,7 +33,7 @@ impl VerifyManager {
         &self,
         e164_phone: &str,
         scenario: VerifyScenario,
-        req_info: &RequestInfo,
+        req_info: &AccessContext,
     ) -> AppResult<()> {
         self.verify_statistic
             .check_and_incr_count(e164_phone, scenario, &req_info)
@@ -52,7 +52,7 @@ impl VerifyManager {
         &self,
         email: &str,
         scenario: VerifyScenario,
-        req_info: &RequestInfo,
+        req_info: &AccessContext,
     ) -> AppResult<()> {
         self.verify_statistic
             .check_and_incr_count(email, scenario, &req_info)
@@ -72,7 +72,7 @@ impl VerifyManager {
         e164_phone: &str,
         scenario: VerifyScenario,
         code: &str,
-        req_info: &RequestInfo,
+        req_info: &AccessContext,
     ) -> AppResult<()> {
         if lib_utils::is_test_phone_number(e164_phone) {
             tracing::debug!("Using test phone number. Skipping Redis verification.");
@@ -88,7 +88,7 @@ impl VerifyManager {
         email: &str,
         scenario: VerifyScenario,
         code: &str,
-        req_info: &RequestInfo,
+        req_info: &AccessContext,
     ) -> AppResult<()> {
         if lib_utils::is_test_email(email) {
             validate_test_code(scenario, code).await

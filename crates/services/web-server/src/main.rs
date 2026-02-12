@@ -29,6 +29,8 @@ async fn main() -> Result<()> {
     // 3. 打印启动信息
     tracing::info!("Application starting up...");
 
+    http::init_components()?;
+
     http::serve(Arc::new(settings))
         .await
         .context("HTTP server failed to start or run")?;
@@ -40,7 +42,7 @@ async fn main() -> Result<()> {
 // 提取日志初始化逻辑到单独的函数
 fn init_logging() -> Result<()> {
     // 假设 settings 中有一个 log_path 字段
-    let log_file_path = "stars.log";
+    let log_file_path = "logs/stars.log";
 
     let json_log = File::create(log_file_path)
         .context(format!("Failed to create log file at {}", log_file_path))?;

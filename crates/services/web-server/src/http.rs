@@ -62,6 +62,10 @@ impl AppState {
     }
 }
 
+pub fn init_components() -> Result<()> {
+    mw::init_ua_extractor()
+}
+
 pub async fn serve(settings: Arc<AppSettings>) -> Result<()> {
     let state = AppState::new(settings.clone()).await?;
     let app = router::init_router(state.clone());

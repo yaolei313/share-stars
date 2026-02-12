@@ -1,5 +1,5 @@
 use crate::biz::dto::AuthnMethod;
-use crate::http::vo::{AppResult, RequestInfo};
+use crate::http::vo::{AccessContext, AppResult};
 use chrono::Utc;
 use lib_core::db::models::AccountDevice;
 use lib_core::db::services::AccountDbService;
@@ -19,7 +19,7 @@ impl AccountDeviceService {
     pub async fn check_trusted_device(
         &self,
         user_id: i64,
-        request_info: &RequestInfo,
+        request_info: &AccessContext,
     ) -> AppResult<bool> {
         let account_device = self
             .account_db_service
@@ -31,14 +31,14 @@ impl AccountDeviceService {
     pub async fn save_new_account_device(
         &self,
         user_id: i64,
-        device: &RequestInfo,
+        device: &AccessContext,
         auth_method: AuthnMethod,
     ) -> AppResult<()> {
         let db_device = AccountDevice {
             id: 0,
             user_id,
             device_id: device.device_id.clone(),
-            last_login_ip: device.ip,
+            last_login_ip: device.client_ip,
             last_login_method: auth_method.code(),
             last_login_at: Default::default(),
             nickname: None,

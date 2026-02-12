@@ -1,5 +1,5 @@
 use crate::biz::verify::VerifyScenario;
-use crate::http::mw::ExtractRequestInfo;
+use crate::http::mw::ExtractAccessContext;
 use crate::http::vo::error::AppError;
 use crate::http::vo::sms::{SmsSendReq, SmsSendResult};
 use crate::http::vo::{success_resp_none_data, AppResult, RespVo};
@@ -12,7 +12,7 @@ use validator::Validate;
 #[axum::debug_handler]
 pub async fn send_sms(
     State(state): State<AppState>,
-    ExtractRequestInfo(req_info): ExtractRequestInfo,
+    ExtractAccessContext(req_info): ExtractAccessContext,
     Json(payload): Json<SmsSendReq>,
 ) -> AppResult<Json<RespVo<SmsSendResult>>> {
     // 校验参数

@@ -1,5 +1,5 @@
 use crate::http::vo::mfa::{MfaInfo, MfaMethod};
-use crate::http::vo::RequestInfo;
+use crate::http::vo::AccessContext;
 use chrono::Utc;
 use lib_core::db::models::ProviderType;
 use lib_macro_derive::BindCode;
@@ -127,6 +127,6 @@ pub struct MfaSession {
     pub mfa_infos: Vec<MfaInfo>,
     pub create_time: chrono::DateTime<Utc>,
     pub authn_method: AuthnMethod,
-    pub req_info: RequestInfo,
+    pub req_info: AccessContext,
     pub chosen_method: Option<MfaMethod>,
 }

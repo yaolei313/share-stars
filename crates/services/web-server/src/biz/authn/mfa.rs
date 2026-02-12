@@ -2,7 +2,7 @@ use crate::biz::dto::{AuthnMethod, MfaSession};
 use crate::biz::verify::{VerifyManager, VerifyScenario};
 use crate::http::vo::error::AppError;
 use crate::http::vo::mfa::{MfaInfo, MfaMethod, MfaVerificationChallenge};
-use crate::http::vo::{AppResult, RequestInfo};
+use crate::http::vo::{AccessContext, AppResult};
 use chrono::Utc;
 use lib_core::db::models::ProviderType;
 use lib_core::db::services::AccountDbService;
@@ -35,7 +35,7 @@ impl MultiFactorAuthService {
         &self,
         user_id: i64,
         authn_method: AuthnMethod,
-        req_info: &RequestInfo,
+        req_info: &AccessContext,
     ) -> AppResult<MfaVerificationChallenge> {
         let mfa_infos = self.get_available_mfa_infos(user_id).await?;
 
@@ -67,7 +67,7 @@ impl MultiFactorAuthService {
         &self,
         session_id: &str,
         chosen_method: MfaMethod,
-        req_info: &RequestInfo,
+        req_info: &AccessContext,
     ) -> AppResult<()> {
         // 1.query and validation
         let mut conn = self.redis_client.get_multiplexed_async_connection().await?;
@@ -115,7 +115,7 @@ impl MultiFactorAuthService {
         &self,
         session_id: &str,
         verify_code: &str,
-        req_info: &RequestInfo,
+        req_info: &AccessContext,
     ) -> AppResult<()> {
         let mut conn = self.redis_client.get_multiplexed_async_connection().await?;
         let session: MfaSession = self
@@ -162,7 +162,7 @@ impl MultiFactorAuthService {
         &self,
         conn: &mut MultiplexedConnection,
         session_id: &str,
-        req_info: &RequestInfo,
+        req_info: &AccessContext,
     ) -> AppResult<MfaSession> {
         let val: Option<String> = conn.get(session_id).await?;
         let Some(val) = val else {
@@ -172,7 +172,7 @@ impl MultiFactorAuthService {
         };
         let session: MfaSession = serde_json::from_str(&val)
             .map_err(|_| AppError::InvalidArgument(Cow::Borrowed("invalid session_id")))?;
-        if session.req_info.device_id != req_info.device_id {
+        if !session.req_info.is_same_device(req_info) {
             return Err(AppError::InvalidArgument(Cow::Borrowed(
                 "invalid session_id",
             )));

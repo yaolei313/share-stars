@@ -1,4 +1,4 @@
-use crate::http::mw::ExtractRequestInfo;
+use crate::http::mw::ExtractAccessContext;
 use crate::http::vo::error::AppError;
 use crate::http::vo::login::*;
 use crate::http::vo::*;
@@ -12,7 +12,7 @@ use validator::Validate;
 ///
 pub async fn login_by_password(
     State(state): State<AppState>,
-    ExtractRequestInfo(req_info): ExtractRequestInfo,
+    ExtractAccessContext(req_info): ExtractAccessContext,
     Json(payload): Json<LoginByPasswordReq>,
 ) -> AppResult<Json<RespVo<LoginResult>>> {
     // 校验参数
@@ -34,7 +34,7 @@ pub async fn login_by_password(
 
 pub async fn login_by_sms(
     State(state): State<AppState>,
-    ExtractRequestInfo(req_info): ExtractRequestInfo,
+    ExtractAccessContext(req_info): ExtractAccessContext,
     Json(payload): Json<LoginBySmsReq>,
 ) -> AppResult<Json<RespVo<LoginResult>>> {
     // 校验参数

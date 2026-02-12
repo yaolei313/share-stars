@@ -1,7 +1,6 @@
-use crate::biz::dto::Identity;
 use crate::biz::verify::VerifyScenario;
 use crate::http::vo::error::AppError;
-use crate::http::vo::{AppResult, RequestInfo};
+use crate::http::vo::{AccessContext, AppResult};
 use chrono::{Datelike, Utc};
 use redis::Script;
 use std::sync::Arc;
@@ -19,7 +18,7 @@ impl VerifyStatistic {
         &self,
         identifier: &str,
         scenario: VerifyScenario,
-        req_info: &RequestInfo,
+        req_info: &AccessContext,
     ) -> AppResult<()> {
         let mut conn = self.redis_client.get_multiplexed_async_connection().await?;
         let day_of_month = Utc::now().naive_local().day();

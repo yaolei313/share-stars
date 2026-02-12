@@ -1,4 +1,5 @@
 mod email_ext;
+mod http_ext;
 mod id_generator;
 mod jwt_ext;
 mod path_ext;
@@ -7,6 +8,7 @@ mod rand_utils;
 mod str_ext;
 
 pub use email_ext::*;
+pub use http_ext::*;
 pub use id_generator::*;
 pub use jwt_ext::*;
 pub use path_ext::*;

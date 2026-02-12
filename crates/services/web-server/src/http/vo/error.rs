@@ -5,7 +5,6 @@ use axum::response::{IntoResponse, Response};
 use axum::Json;
 use lib_macro_derive::BindCode;
 use redis::RedisError;
-use sqlx::error::DatabaseError;
 use std::borrow::Cow;
 use std::io;
 use thiserror::Error;

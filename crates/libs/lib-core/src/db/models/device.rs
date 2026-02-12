@@ -4,7 +4,7 @@ use serde_json::Value;
 use sqlx::FromRow;
 use std::net::IpAddr;
 
-#[derive(Debug, FromRow)]
+#[derive(Debug, FromRow, Clone)]
 pub struct Device {
     pub device_id: String,
     pub full_fingerprint: Value,

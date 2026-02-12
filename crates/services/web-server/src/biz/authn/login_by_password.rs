@@ -2,14 +2,14 @@ use crate::biz::authn::LoginService;
 use crate::biz::dto::{AuthnMethod, Identity};
 use crate::http::vo::error::AppError;
 use crate::http::vo::login::LoginResult;
-use crate::http::vo::{AppResult, RequestInfo};
+use crate::http::vo::{AccessContext, AppResult};
 
 impl LoginService {
     pub async fn login_by_password(
         &self,
         e164_phone: &str,
         password: &str,
-        req_info: &RequestInfo,
+        req_info: &AccessContext,
     ) -> AppResult<LoginResult> {
         tracing::info!("login by. {}", e164_phone);
         let identity = Identity::PhoneNumber(e164_phone);

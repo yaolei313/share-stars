@@ -6,7 +6,7 @@ use crate::biz::token::AccessTokenService;
 use crate::biz::verify::VerifyManager;
 use crate::http::vo::error::AppError;
 use crate::http::vo::login::LoginResult;
-use crate::http::vo::{AppResult, RequestInfo};
+use crate::http::vo::{AccessContext, AppResult};
 use lib_core::db::models::Account;
 use lib_core::db::services::AccountDbService;
 use lib_utils::IdGenerator;
@@ -100,37 +100,33 @@ impl LoginService {
         user_id: i64,
         new_register: bool,
         authn_method: AuthnMethod,
-        req_info: &RequestInfo,
+        ctx: &AccessContext,
     ) -> AppResult<LoginResult> {
         // 1.保存设备或可信设备校验
         if new_register {
             self.account_device_service
-                .save_new_account_device(user_id, req_info, authn_method)
+                .save_new_account_device(user_id, ctx, authn_method)
                 .await?;
-            tracing::info!("new device.{} {}", user_id, &req_info.device_id);
+            tracing::info!("new device.{} {}", user_id, &ctx.device_id);
         } else {
             let trusted = self
                 .account_device_service
-                .check_trusted_device(user_id, req_info)
+                .check_trusted_device(user_id, ctx)
                 .await?;
             if !trusted {
                 let challenge = self
                     .mfa_service
-                    .generate_challenge(user_id, authn_method, req_info)
+                    .generate_challenge(user_id, authn_method, ctx)
                     .await?;
                 return Err(AppError::UpgradedMFA(challenge));
             }
-            tracing::info!(
-                "login from trusted device. {} {}",
-                user_id,
-                &req_info.device_id
-            );
+            tracing::info!("login from trusted device. {} {}", user_id, &ctx.device_id);
         }
 
         // 2.token生成
         let token = self
             .token_service
-            .create_access_token(user_id, authn_method, req_info)?;
+            .create_access_token(user_id, authn_method, ctx)?;
         let result = LoginResult {
             user_id,
             new_register,
