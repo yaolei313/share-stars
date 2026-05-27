@@ -1,8 +1,9 @@
 use crate::biz::verify::VerifyScenario;
 use crate::http::vo::mfa::MfaVerificationChallenge;
-use crate::http::vo::RespVo;
+use crate::http::vo::ApiResponse;
 use axum::response::{IntoResponse, Response};
 use axum::Json;
+use http::StatusCode;
 use lib_macro_derive::BindCode;
 use redis::RedisError;
 use std::borrow::Cow;
@@ -142,7 +143,7 @@ pub enum AppError {
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         tracing::error!("{:?}", self);
-        let vo: RespVo<()> = RespVo::from(self);
-        Json(vo).into_response()
+        let vo: ApiResponse<()> = ApiResponse::from(self);
+        (StatusCode::OK, Json(vo)).into_response()
     }
 }

@@ -1,5 +1,5 @@
 use crate::biz::account::AccountDeviceService;
-use crate::biz::authn::{LoginService, MultiFactorAuthService};
+use crate::biz::authn::{LoginService, MultiFactorAuthService, RegisterService};
 use crate::biz::email::EmailSender;
 use crate::biz::sms::{SmsSender, SmsTemplateManager};
 use crate::biz::statistic::PasswordStatisticService;
@@ -31,6 +31,7 @@ pub struct ServiceState {
     pub password_statistic: Arc<PasswordStatisticService>,
     pub account_device_service: Arc<AccountDeviceService>,
     pub login_service: Arc<LoginService>,
+    pub register_service: Arc<RegisterService>,
     pub verify_manager: Arc<VerifyManager>,
 }
 
@@ -86,6 +87,13 @@ impl ServiceState {
             verify_manager.clone(),
             mfa_service.clone(),
         ));
+        let register_service = Arc::new(RegisterService::new(
+            id_generator.clone(),
+            db_service_state.account_db_service.clone(),
+            account_device_service.clone(),
+            token_service.clone(),
+            verify_manager.clone(),
+        ));
         Ok(Self {
             code_manager,
             id_generator,
@@ -95,6 +103,7 @@ impl ServiceState {
             password_statistic,
             account_device_service,
             login_service,
+            register_service,
             verify_manager,
         })
     }

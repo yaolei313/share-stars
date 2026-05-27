@@ -17,6 +17,7 @@ mod login_by_password;
 mod login_by_sms;
 
 mod mfa;
+mod register_by_email;
 
 pub struct LoginService {
     id_generator: Arc<IdGenerator>,
@@ -26,6 +27,14 @@ pub struct LoginService {
     account_device_service: Arc<AccountDeviceService>,
     verify_manager: Arc<VerifyManager>,
     mfa_service: Arc<MultiFactorAuthService>,
+}
+
+pub struct RegisterService {
+    id_generator: Arc<IdGenerator>,
+    token_service: Arc<AccessTokenService>,
+    account_db_service: Arc<AccountDbService>,
+    account_device_service: Arc<AccountDeviceService>,
+    verify_manager: Arc<VerifyManager>,
 }
 
 impl LoginService {
@@ -150,4 +159,22 @@ fn check_status(account: &Account) -> AppResult<()> {
         return Err(AppError::AccountClosed);
     }
     Ok(())
+}
+
+impl RegisterService {
+    pub fn new(
+        id_generator: Arc<IdGenerator>,
+        account_db_service: Arc<AccountDbService>,
+        account_device_service: Arc<AccountDeviceService>,
+        token_service: Arc<AccessTokenService>,
+        verify_manager: Arc<VerifyManager>,
+    ) -> Self {
+        Self {
+            id_generator,
+            token_service,
+            account_db_service,
+            account_device_service,
+            verify_manager,
+        }
+    }
 }

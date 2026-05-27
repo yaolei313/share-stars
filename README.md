@@ -47,3 +47,38 @@ openssl rsa -in private_key2.pem -pubout -out public_key2.pem
     * 行为模式识别: 通过分析这些匿名行为，识别用户的兴趣、偏好、使用习惯、流失风险等。
     * 漏斗分析与归因: 用于分析用户在产品中的转化路径、发现瓶颈，并进行初步的渠道归因。
     * 个性化推荐: 尽管是匿名用户，也可以基于其匿名行为进行基础的个性化内容推荐或广告展示。
+
+## crates
+
+### utils
+
+1. chrono
+2. dotenv
+3. clap
+4. config
+5. pin project lite
+6. bytes
+7. atoi 整数格式化为标准文本
+8. serde
+9. regex
+10. icu4x
+11. reqwest
+12. hyper
+13. rayon
+14. ahash
+
+## algorithm
+
+1. sha2
+2. hex
+3. rand
+4. pkcs8
+5. base64
+
+### frame
+
+1. axum + tokio + sqlite
+2. tower
+3. tracing + tracing-subscriber
+4. anyhow
+5. thiserror

@@ -1,15 +1,17 @@
 use crate::http::mw::AccessTokenAuth;
-use crate::http::vo::{success_resp, RespVo};
+use crate::http::vo::{ApiResponse, AppResult};
 use crate::http::AppState;
 use axum::extract::{Path, Query, State};
-use axum::Json;
 use std::collections::HashMap;
 
 pub async fn profile_me(
     State(state): State<AppState>,
     AccessTokenAuth(current_user): AccessTokenAuth,
-) -> Json<RespVo<String>> {
-    Json(success_resp(format!("hello world {:?}", current_user)))
+) -> AppResult<ApiResponse<String>> {
+    Ok(ApiResponse::success(format!(
+        "hello world {:?}",
+        current_user
+    )))
 }
 
 pub async fn profile(

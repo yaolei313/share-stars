@@ -14,7 +14,7 @@ pub async fn login_by_password(
     State(state): State<AppState>,
     ExtractAccessContext(req_info): ExtractAccessContext,
     Json(payload): Json<LoginByPasswordReq>,
-) -> AppResult<Json<RespVo<LoginResult>>> {
+) -> AppResult<ApiResponse<LoginResult>> {
     // 校验参数
     if let Err(err) = payload.validate() {
         tracing::warn!("login by password validate error: {}", err);
@@ -29,14 +29,14 @@ pub async fn login_by_password(
         .login_service
         .login_by_password(&e164_phone, &payload.password, &req_info)
         .await
-        .map(|r| Json(success_resp(r)))
+        .map(|r| ApiResponse::success(r))
 }
 
 pub async fn login_by_sms(
     State(state): State<AppState>,
     ExtractAccessContext(req_info): ExtractAccessContext,
     Json(payload): Json<LoginBySmsReq>,
-) -> AppResult<Json<RespVo<LoginResult>>> {
+) -> AppResult<ApiResponse<LoginResult>> {
     // 校验参数
     if let Err(err) = payload.validate() {
         tracing::warn!("login by sms invalid argument: {:?} {}", payload, err);
@@ -51,5 +51,5 @@ pub async fn login_by_sms(
         .login_service
         .login_by_sms(&e164_phone, &payload.sms_code, &req_info)
         .await
-        .map(|r| Json(success_resp(r)))
+        .map(|r| ApiResponse::success(r))
 }

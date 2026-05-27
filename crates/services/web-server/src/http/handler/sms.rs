@@ -2,7 +2,7 @@ use crate::biz::verify::VerifyScenario;
 use crate::http::mw::ExtractAccessContext;
 use crate::http::vo::error::AppError;
 use crate::http::vo::sms::{SmsSendReq, SmsSendResult};
-use crate::http::vo::{success_resp_none_data, AppResult, RespVo};
+use crate::http::vo::{ApiResponse, AppResult};
 use crate::http::AppState;
 use axum::extract::State;
 use axum::Json;
@@ -14,7 +14,7 @@ pub async fn send_sms(
     State(state): State<AppState>,
     ExtractAccessContext(req_info): ExtractAccessContext,
     Json(payload): Json<SmsSendReq>,
-) -> AppResult<Json<RespVo<SmsSendResult>>> {
+) -> AppResult<ApiResponse<SmsSendResult>> {
     // 校验参数
     if let Err(err) = payload.validate() {
         tracing::warn!("failed to validate payload: {:?}", payload);
@@ -32,6 +32,5 @@ pub async fn send_sms(
         .send_sms_code(&e164_phone, verify_type, &req_info)
         .await?;
 
-    let rsp: RespVo<SmsSendResult> = success_resp_none_data();
-    Ok(Json::from(rsp))
+    Ok(ApiResponse::success_none())
 }

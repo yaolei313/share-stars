@@ -1,4 +1,5 @@
 mod biz;
+mod component;
 mod config;
 mod http;
 

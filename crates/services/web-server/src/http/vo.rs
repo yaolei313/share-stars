@@ -5,8 +5,12 @@ pub mod mfa;
 pub mod register;
 pub mod sms;
 pub mod validators;
+pub mod verify;
 
 use crate::http::vo::error::AppError;
+use axum::response::{IntoResponse, Response};
+use axum::Json;
+use http::StatusCode;
 use lib_macro_derive::BindCode;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -18,8 +22,9 @@ use std::str::FromStr;
 pub type AppResult<T> = Result<T, AppError>;
 
 const SUCCESS: i32 = 0;
+
 #[derive(Debug, Serialize)]
-pub struct RespVo<T>
+pub struct ApiResponse<T>
 where
     T: Serialize,
 {
@@ -28,13 +33,13 @@ where
     pub data: Option<T>,
 }
 
-impl<T> From<AppError> for RespVo<T>
+impl<T> From<AppError> for ApiResponse<T>
 where
     T: Serialize,
 {
     fn from(value: AppError) -> Self {
         let message = format!("{}", value);
-        RespVo {
+        ApiResponse {
             code: value.code(),
             message,
             data: None,
@@ -42,25 +47,34 @@ where
     }
 }
 
-pub fn success_resp<T>(data: T) -> RespVo<T>
+impl<T> IntoResponse for ApiResponse<T>
 where
     T: Serialize,
 {
-    let rsp: RespVo<T> = success_resp_none_data();
-    RespVo {
-        data: Some(data),
-        ..rsp
+    fn into_response(self) -> Response {
+        // 业务层 code == 0 映射为 HTTP 200，你也可以根据自身业务映射不同的 StatusCode
+        (StatusCode::OK, Json(self)).into_response()
     }
 }
 
-pub fn success_resp_none_data<T>() -> RespVo<T>
+impl<T> ApiResponse<T>
 where
     T: Serialize,
 {
-    RespVo {
-        code: SUCCESS,
-        message: "OK".to_string(),
-        data: None,
+    pub fn success(data: T) -> Self {
+        Self {
+            code: SUCCESS,
+            message: "OK".to_string(),
+            data: Some(data),
+        }
+    }
+
+    pub fn success_none() -> Self {
+        Self {
+            code: SUCCESS,
+            message: "OK".to_string(),
+            data: None,
+        }
     }
 }
 
